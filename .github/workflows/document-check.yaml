@@ -3,7 +3,16 @@
 on:
   push:
     branches: [main, master]
+    paths: &paths
+      - "R/**"
+      - "man/**"
+      - "DESCRIPTION"
+      - "NAMESPACE"
+      - ".github/workflows/document-check.yaml"
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths: *paths
+  workflow_dispatch:
 
 name: document-check.yaml
 
@@ -11,6 +20,7 @@ permissions: read-all
 
 jobs:
   document-check:
+    if: github.event.pull_request.draft != true
     runs-on: ubuntu-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
