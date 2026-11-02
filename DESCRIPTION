@@ -1,0 +1,17 @@
+Package: ST4
+Title: Sample Unit Size and Number for Seabed Image Surveys
+Version: 0.0.0.9000
+Authors@R: 
+    person("Adam", "Ward", , "adamwa@noc.ac.uk", role = c("aut", "cre"))
+Description: Tools to choose sample unit size and number of sample units
+    for photographic seabed surveys, following Durden et al. (2016).
+    Metrics are calculated by vegan.
+License: Apache License (>= 2)
+Config/roxygen2/version: 8.1.1
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Imports: 
+    vegan (>= 2.7-6)
