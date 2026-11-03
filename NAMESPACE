@@ -2,5 +2,7 @@
 
 S3method(plot,sample_size_table)
 S3method(print,sample_size_table)
+S3method(print,su_data)
+export(read_counts)
 export(sample_size)
 export(sample_size_table)
