@@ -65,21 +65,66 @@ sample_size <- function(cv, delta, n_strata = 2, alpha = 0.05, power = 0.9,
   unname(mapply(one, cv, delta))
 }
 
-check_positive <- function(x, name) {
-  if (!is.numeric(x) || length(x) == 0 || anyNA(x) || any(x <= 0)) {
-    stop("`", name, "` must be positive numbers.", call. = FALSE)
-  }
+#' Table of sample units required
+#'
+#' Runs [sample_size()] for every combination of `cv` and `delta`. The
+#' defaults are the values used in Table 1 of Durden et al. (2016), so
+#' `sample_size_table()` with no arguments recreates that table.
+#'
+#' @inheritParams sample_size
+#' @param cv Coefficients of variation, in %. These become the table rows.
+#' @param delta Smallest true differences to detect, in % of the mean. These
+#'   become the table columns.
+#'
+#' @return A `sample_size_table` object. This is an integer matrix with one row
+#'   per `cv` and one column per `delta`, holding the SUs required per stratum.
+#'   Cells are `NA` where more than `max_n` are needed. The settings used are
+#'   kept in `attr(x, "settings")`. Use `plot()` to draw it as a heatmap.
+#'
+#' @references
+#' Durden, J.M., Schoening, T., Althaus, F., et al. (2016). Perspectives in
+#' visual imaging for marine biology and ecology: from acquisition to
+#' understanding. *Oceanography and Marine Biology: An Annual Review*, 54,
+#' 1-72. Table 1.
+#'
+#' @seealso [sample_size()] for single values, [plot.sample_size_table()].
+#'
+#' @examples
+#' # Recreate Durden et al. (2016) Table 1
+#' tab <- sample_size_table()
+#' tab
+#' plot(tab, max_shown = 10)
+#'
+#' # A smaller table with 3 strata
+#' sample_size_table(cv = c(10, 20, 30), delta = c(20, 40), n_strata = 3)
+#' @export
+sample_size_table <- function(cv = seq(5, 50, 5),
+                              delta = c(10, 14, 20, 28, 40, 56, 79, 112, 158, 224),
+                              n_strata = 2, alpha = 0.05, power = 0.9,
+                              max_n = 100) {
+  grid <- expand.grid(cv = cv, delta = delta)
+  n <- sample_size(grid$cv, grid$delta, n_strata = n_strata, alpha = alpha,
+                   power = power, max_n = max_n)
+
+  structure(
+    matrix(n, nrow = length(cv), dimnames = list(cv = cv, delta = delta)),
+    settings = list(n_strata = n_strata, alpha = alpha, power = power,
+                    max_n = max_n),
+    class = "sample_size_table"
+  )
 }
 
-check_probability <- function(x, name) {
-  if (!is.numeric(x) || length(x) != 1 || is.na(x) || x <= 0 || x >= 1) {
-    stop("`", name, "` must be a single number between 0 and 1.", call. = FALSE)
-  }
-}
+#' @export
+print.sample_size_table <- function(x, ...) {
+  s <- attr(x, "settings")
+  cat("Sample units required per stratum\n")
+  cat("Strata: ", s$n_strata, ", alpha: ", s$alpha, ", power: ", s$power,
+      "\n", sep = "")
+  cat("Rows are CV %. Columns are delta %.\n\n")
 
-check_count <- function(x, name, min) {
-  if (!is.numeric(x) || length(x) != 1 || is.na(x) || x < min || x != round(x)) {
-    stop("`", name, "` must be a single whole number, at least ", min, ".",
-         call. = FALSE)
-  }
+  m <- unclass(x)
+  attr(m, "settings") <- NULL
+  out <- ifelse(is.na(m), paste0(">", s$max_n), m) # keeps the dimnames
+  print(out, quote = FALSE, right = TRUE)
+  invisible(x)
 }
