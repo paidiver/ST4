@@ -32,6 +32,13 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Use the latest CRAN binaries
+        # rocker images for older R versions freeze CRAN at the date the next
+        # R version came out, which can be too old for our dependencies
+        run: |
+          . /etc/os-release
+          echo "options(repos = c(CRAN = 'https://p3m.dev/cran/__linux__/${VERSION_CODENAME}/latest'))" >> "$(R RHOME)/etc/Rprofile.site"
+
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::roxygen2
