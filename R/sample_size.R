@@ -12,7 +12,10 @@
 #' `qt(1 - alpha / 2, v)` and \eqn{t_{2(1-P)[v]}} is `qt(power, v)`.
 #'
 #' n appears on both sides (through \eqn{v}), so it is found by stepping n up
-#' from 2 until the inequality holds.
+#' until the inequality holds. When the power is 0.5 or more, the search
+#' starts from the same formula with normal (z) values in place of t values.
+#' Those t values are always larger than the z values, so no smaller n can
+#' work and the result is the same as starting from n = 2, only faster.
 #'
 #' @param cv Coefficient of variation of the metric, in %.
 #' @param delta Smallest true difference to detect, in % of the mean.
@@ -25,8 +28,9 @@
 #'   `alpha = 0.1`. These override any in `control`.
 #'
 #' @return Integer vector of SUs required per stratum, one per pair of `cv`
-#'   and `delta` (recycled to the same length). `NA` where more than `max_n`
-#'   (see [sample_size_control()]) are needed.
+#'   and `delta` (recycled to the same length). There is no upper limit by
+#'   default. If `max_n` is set (see [sample_size_control()]), `NA` where more
+#'   than `max_n` are needed.
 #'
 #' @references
 #' Durden, J.M., Schoening, T., Althaus, F., et al. (2016). Perspectives in
@@ -54,15 +58,22 @@ sample_size <- function(cv, delta, control = sample_size_control(), ...) {
   check_positive(delta, "delta")
   ctl <- resolve_control(control, list(...), sample_size_control)
 
+  # Lower bound for n: Eqn 1 with z values. Above the median (probability 0.5)
+  # t values are larger than z values, so for power >= 0.5 no smaller n can
+  # work. Below that the bound does not hold, so start from 2.
+  z <- stats::qnorm(1 - ctl$alpha / 2) + stats::qnorm(ctl$power)
+
   one <- function(cv, delta) {
-    for (n in 2:ctl$max_n) {
+    n <- if (ctl$power >= 0.5) max(2, floor(2 * (cv / delta)^2 * z^2)) else 2
+    repeat {
+      if (n > ctl$max_n) return(NA_integer_)
       v <- ctl$n_strata * (n - 1)
       t_alpha <- stats::qt(1 - ctl$alpha / 2, v) # two-tailed at alpha
       t_power <- stats::qt(ctl$power, v) # t_2(1-P)[v] is two-tailed at 2(1 - P)
       rhs <- 2 * (cv / delta)^2 * (t_alpha + t_power)^2
       if (n >= rhs) return(as.integer(n))
+      n <- n + 1
     }
-    NA_integer_
   }
 
   unname(mapply(one, cv, delta))
@@ -81,7 +92,7 @@ sample_size <- function(cv, delta, control = sample_size_control(), ...) {
 #'
 #' @return A `sample_size_table` object. This is an integer matrix with one row
 #'   per `cv` and one column per `delta`, holding the SUs required per stratum.
-#'   Cells are `NA` where more than `max_n` are needed. The settings used are
+#'   Cells are `NA` only where `max_n` is set and more than that are needed. The settings used are
 #'   kept in `attr(x, "settings")` as a [sample_size_control()] object. Use
 #'   `plot()` to draw it as a heatmap.
 #'
@@ -154,7 +165,7 @@ print.sample_size_table <- function(x, ...) {
 #' @return A `sample_size_data` object. This is the [metric_cv()] table with
 #'   one extra column per `delta`, named like `n_delta_40`, holding the
 #'   sample units required per stratum. `NA` where the CV could not be
-#'   calculated or more than `max_n` are needed. The settings used are kept in
+#'   calculated, or where `max_n` is set and more than that are needed. The settings used are kept in
 #'   `attr(x, "settings")` and the deltas in `attr(x, "delta")`.
 #'
 #' @examples

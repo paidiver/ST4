@@ -59,7 +59,7 @@ test_that("sample_size_data matches sample_size() with the CV", {
   cv <- metric_cv(x)$cv
 
   expect_s3_class(out, "sample_size_data")
-  expect_equal(out$n_delta_50, sample_size(cv, 50, max_n = 100))
+  expect_equal(out$n_delta_50, sample_size(cv, 50))
   expect_equal(out$n_delta_100, sample_size(cv, 100))
 })
 

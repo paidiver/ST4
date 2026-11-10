@@ -18,8 +18,8 @@
 #' @param alpha Significance level, two-tailed. Between 0 and 1.
 #' @param power Power of the test, P. Between 0 and 1.
 #' @param n_strata Number of strata (groups) being compared. At least 2.
-#' @param max_n Largest number of sample units to try. Cells needing more are
-#'   returned as `NA`.
+#' @param max_n Largest number of sample units to try. No limit by default.
+#'   If set, cells needing more are returned as `NA`.
 #' @param ... Not used. A misspelt setting name ends up here and stops with
 #'   an error that suggests the right name.
 #'
@@ -34,7 +34,7 @@
 #' sample_size_control(alpha = 0.1)
 #' @export
 sample_size_control <- function(alpha = 0.05, power = 0.9, n_strata = 2,
-                                max_n = 100, ...) {
+                                max_n = Inf, ...) {
   check_unknown_settings(list(...),
                          names(formals(sample_size_control)),
                          "sample_size_control")

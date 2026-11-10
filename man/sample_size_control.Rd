@@ -4,7 +4,7 @@
 \alias{sample_size_control}
 \title{Settings for the number of sample units}
 \usage{
-sample_size_control(alpha = 0.05, power = 0.9, n_strata = 2, max_n = 100, ...)
+sample_size_control(alpha = 0.05, power = 0.9, n_strata = 2, max_n = Inf, ...)
 }
 \arguments{
 \item{alpha}{Significance level, two-tailed. Between 0 and 1.}
@@ -13,8 +13,8 @@ sample_size_control(alpha = 0.05, power = 0.9, n_strata = 2, max_n = 100, ...)
 
 \item{n_strata}{Number of strata (groups) being compared. At least 2.}
 
-\item{max_n}{Largest number of sample units to try. Cells needing more are
-returned as \code{NA}.}
+\item{max_n}{Largest number of sample units to try. No limit by default.
+If set, cells needing more are returned as \code{NA}.}
 
 \item{...}{Not used. A misspelt setting name ends up here and stops with
 an error that suggests the right name.}

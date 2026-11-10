@@ -10,8 +10,8 @@
 \item{x}{A \code{sample_size_table} object from \code{\link[=sample_size_table]{sample_size_table()}}.}
 
 \item{max_shown}{Cells needing more than this are greyed out instead of
-coloured. Durden et al. (2016) grey out cells above 10. By default only
-cells above \code{max_n} are greyed out.}
+coloured. Durden et al. (2016) grey out cells above 10. By default no
+cells are greyed out, unless \code{max_n} is set and cells need more.}
 
 \item{main}{Plot title.}
 
