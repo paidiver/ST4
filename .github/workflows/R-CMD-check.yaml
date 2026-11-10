@@ -4,9 +4,9 @@
 # Runs in rocker/r-ver containers, which have R already installed. This skips
 # setup-r, whose system package install was the slowest part of each run.
 #
-# Ubuntu only during development. PRs: R release only. main + manual: release,
-# oldrel and devel. Add macOS and Windows back once dev is done (#37); they
-# cannot use containers and need setup-r.
+# Ubuntu only during development. PRs: R release only. main + manual: release
+# and oldrel. Add macOS, Windows and R-devel back once dev is done (#37); macOS
+# and Windows cannot use containers and need setup-r.
 on:
   push:
     branches: [main, master]
@@ -38,7 +38,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        r: ${{ fromJSON(github.event_name == 'pull_request' && '["4.6"]' || '["4.6", "4.5", "devel"]') }}
+        r: ${{ fromJSON(github.event_name == 'pull_request' && '["4.6"]' || '["4.6", "4.5"]') }}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
