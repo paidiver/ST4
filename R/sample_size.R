@@ -131,7 +131,8 @@ sample_size_table <- function(cv = seq(5, 50, 5),
 print.sample_size_table <- function(x, ...) {
   s <- attr(x, "settings")
   cat("Sample units required per stratum\n")
-  cat("Strata: ", s$n_strata, ", alpha: ", s$alpha, ", power: ", s$power,
+  cat("From Durden et al. (2016) Eqn 1 for set CVs, not from survey data\n")
+  cat(s$n_strata, " strata compared, alpha ", s$alpha, ", power ", s$power,
       "\n", sep = "")
   cat("Rows are CV %. Columns are delta %.\n\n")
 
@@ -189,7 +190,8 @@ sample_size_data <- function(x, delta, metrics = "richness",
     out[[paste0("n_delta_", d)]] <- n
   }
 
-  structure(out, settings = ctl, delta = delta,
+  structure(out, settings = ctl, delta = delta, data = attr(out, "data"),
+            data_citation = attr(out, "data_citation"),
             class = c("sample_size_data", "data.frame"))
 }
 
@@ -198,12 +200,16 @@ print.sample_size_data <- function(x, ...) {
   s <- attr(x, "settings")
   delta <- attr(x, "delta")
   cat("Sample units required per stratum, from survey data\n")
-  cat("Strata: ", s$n_strata, ", alpha: ", s$alpha, ", power: ", s$power,
+  cat("Data: ", attr(x, "data"), "\n", sep = "")
+  cat("Data citation: ", attr(x, "data_citation"), "\n", sep = "")
+  cat(s$n_strata, " strata compared, alpha ", s$alpha, ", power ", s$power,
       "\n\n", sep = "")
 
   df <- as.data.frame(unclass(x), stringsAsFactors = FALSE)
   attr(df, "settings") <- NULL
   attr(df, "delta") <- NULL
+  attr(df, "data") <- NULL
+  attr(df, "data_citation") <- NULL
   df$mean <- signif(df$mean, 4)
   df$sd <- signif(df$sd, 4)
   df$cv <- round(df$cv, 1)

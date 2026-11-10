@@ -19,6 +19,10 @@
 #'   metadata.
 #' @param id Name of the tile id column in `metadata`.
 #' @param area Name of the seabed area column in `metadata`, in m².
+#' @param data_citation Free text describing or citing the data, such as
+#'   `"Haig Fras AUV survey 2012, Benoist et al. (2019)"`. It is carried
+#'   through every later step and shown in printouts and plots, so results
+#'   always say where the data came from. It cannot be left empty.
 #'
 #' @return An `su_data` object. This is a list with:
 #'   * `comm`: numeric matrix of counts with one row per tile and one column
@@ -41,9 +45,14 @@
 #' x <- read_counts(counts, metadata)
 #' x
 #' x$comm
+#'
+#' # Say where the data came from
+#' read_counts(counts, metadata, data_citation = "Made-up example tiles")
 #' @export
 read_counts <- function(counts, metadata, id = "FileName",
-                        area = "Area_seabed_m2") {
+                        area = "Area_seabed_m2",
+                        data_citation = "No Data Citation") {
+  check_text(data_citation, "data_citation")
   counts <- read_table(counts, "counts")
   metadata <- read_table(metadata, "metadata")
   metadata <- metadata[!is.na(names(metadata)) & names(metadata) != ""]
@@ -75,17 +84,17 @@ read_counts <- function(counts, metadata, id = "FileName",
   rownames(meta) <- NULL
   check_positive(meta[[area]], area)
 
-  new_su_data(comm, meta, id = id, area = area)
+  new_su_data(comm, meta, id = id, area = area,
+              data_citation = trimws(data_citation))
 }
 
 #' @export
 print.su_data <- function(x, ...) {
   s <- x$settings
   cat("su_data\n")
-  if (!is.null(s$stratum)) {
-    cat("Stratum: ", s$by, " = ", s$stratum, "\n", sep = "")
-  }
-  cat("Tiles: ", nrow(x$comm), "\n", sep = "")
+  cat("Data citation: ", s$data_citation, "\n", sep = "")
+  cat("Stratum: ", describe_stratum(x), "\n", sep = "")
+  cat("Units: ", nrow(x$comm), " ", s$unit, "\n", sep = "")
   cat("Taxa: ", ncol(x$comm), "\n", sep = "")
   cat("Individuals: ", sum(x$comm), "\n", sep = "")
   cat("Seabed area: ", format(sum(x$meta[[s$area]]), digits = 6), " m\u00b2\n",
@@ -97,11 +106,26 @@ print.su_data <- function(x, ...) {
   invisible(x)
 }
 
-new_su_data <- function(comm, meta, id, area) {
+new_su_data <- function(comm, meta, id, area, data_citation,
+                        unit = "tiles") {
   structure(
-    list(comm = comm, meta = meta, settings = list(id = id, area = area)),
+    list(comm = comm, meta = meta,
+         settings = list(id = id, area = area, unit = unit,
+                         data_citation = data_citation)),
     class = "su_data"
   )
+}
+
+# One-line descriptions of the data, for labelling printouts and plots
+describe_stratum <- function(x) {
+  s <- x$settings
+  if (is.null(s$stratum)) "all (none selected)" else
+    paste0(s$by, " = ", s$stratum)
+}
+
+describe_data <- function(x) {
+  paste0(nrow(x$comm), " ", x$settings$unit, ", stratum ",
+         describe_stratum(x))
 }
 
 read_table <- function(x, name) {

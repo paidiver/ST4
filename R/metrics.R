@@ -162,8 +162,10 @@ as_metric_list <- function(metrics) {
 #'
 #' @inheritParams su_metrics
 #'
-#' @return A data frame with one row per metric and the columns `metric`,
-#'   `n_units` (units used), `mean`, `sd` and `cv` (%).
+#' @return A `metric_cv` object: a data frame with one row per metric and the
+#'   columns `metric`, `n_units` (units used), `mean`, `sd` and `cv` (%). A
+#'   description of the data (units, stratum) is kept in `attr(x, "data")`
+#'   and shown when printed.
 #'
 #' @examples
 #' counts_file <- system.file("extdata", "synthetic_counts.csv", package = "ST4")
@@ -183,5 +185,22 @@ metric_cv <- function(x, metrics = "richness", ...) {
     cv <- if (!is.na(m) && !is.na(s) && m != 0) 100 * s / m else NA_real_
     data.frame(metric = name, n_units = length(v), mean = m, sd = s, cv = cv)
   })
-  do.call(rbind, rows)
+  structure(do.call(rbind, rows), data = describe_data(x),
+            data_citation = x$settings$data_citation,
+            class = c("metric_cv", "data.frame"))
+}
+
+#' @export
+print.metric_cv <- function(x, ...) {
+  cat("Variation of each metric\n")
+  cat("Data: ", attr(x, "data"), "\n", sep = "")
+  cat("Data citation: ", attr(x, "data_citation"), "\n\n", sep = "")
+  df <- as.data.frame(unclass(x), stringsAsFactors = FALSE)
+  attr(df, "data") <- NULL
+  attr(df, "data_citation") <- NULL
+  df$mean <- signif(df$mean, 4)
+  df$sd <- signif(df$sd, 4)
+  df$cv <- round(df$cv, 1)
+  print(df, row.names = FALSE)
+  invisible(x)
 }

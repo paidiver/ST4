@@ -84,7 +84,19 @@ test_that("print flags the metric with the highest CV", {
   worst <- cv$metric[which.max(cv$cv)]
 
   expect_output(print(out), paste0("Worst case: ", worst))
-  expect_output(print(out), "alpha: 0.05")
+  expect_output(print(out), "2 strata compared, alpha 0.05")
+  # cv_data() has 4 tiles and no stratum selected
+  expect_output(print(out), "Data: 4 tiles, stratum all \\(none selected\\)")
+})
+
+test_that("metric_cv and sample_size_data say which data they came from", {
+  files <- c(system.file("extdata", "synthetic_counts.csv", package = "ST4"),
+             system.file("extdata", "synthetic_metadata.csv", package = "ST4"))
+  x <- select_stratum(read_counts(files[1], files[2]), "hard")
+  # The synthetic data has 30 tiles in the hard substratum
+  label <- "Data: 30 tiles, stratum Substratum = hard"
+  expect_output(print(metric_cv(x)), label)
+  expect_output(print(sample_size_data(x, delta = 40)), label)
 })
 
 test_that("works on the synthetic data", {

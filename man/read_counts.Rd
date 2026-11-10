@@ -4,7 +4,13 @@
 \alias{read_counts}
 \title{Read counts and metadata for each tile}
 \usage{
-read_counts(counts, metadata, id = "FileName", area = "Area_seabed_m2")
+read_counts(
+  counts,
+  metadata,
+  id = "FileName",
+  area = "Area_seabed_m2",
+  data_citation = "No Data Citation"
+)
 }
 \arguments{
 \item{counts}{Path to a CSV file of counts, or a data frame of counts.}
@@ -15,6 +21,11 @@ metadata.}
 \item{id}{Name of the tile id column in \code{metadata}.}
 
 \item{area}{Name of the seabed area column in \code{metadata}, in m².}
+
+\item{data_citation}{Free text describing or citing the data, such as
+\code{"Haig Fras AUV survey 2012, Benoist et al. (2019)"}. It is carried
+through every later step and shown in printouts and plots, so results
+always say where the data came from. It cannot be left empty.}
 }
 \value{
 An \code{su_data} object. This is a list with:
@@ -56,4 +67,7 @@ metadata <- data.frame(
 x <- read_counts(counts, metadata)
 x
 x$comm
+
+# Say where the data came from
+read_counts(counts, metadata, data_citation = "Made-up example tiles")
 }

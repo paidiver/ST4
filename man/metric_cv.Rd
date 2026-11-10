@@ -16,8 +16,10 @@ and/or named functions. Defaults to richness.}
 Shannon in bits instead of the natural log.}
 }
 \value{
-A data frame with one row per metric and the columns \code{metric},
-\code{n_units} (units used), \code{mean}, \code{sd} and \code{cv} (\%).
+A \code{metric_cv} object: a data frame with one row per metric and the
+columns \code{metric}, \code{n_units} (units used), \code{mean}, \code{sd} and \code{cv} (\%). A
+description of the data (units, stratum) is kept in \code{attr(x, "data")}
+and shown when printed.
 }
 \description{
 Calculates each metric for every tile or sample unit with \code{\link[=su_metrics]{su_metrics()}},
