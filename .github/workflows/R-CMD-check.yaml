@@ -1,8 +1,12 @@
 # Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
 # Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
 #
-# Ubuntu only during development. PRs: release only. main + manual: release, devel, oldrel.
-# Add macOS and Windows back to the matrix once dev is done (Mac/Windows minutes cost more on private repos).
+# Runs in rocker/r-ver containers, which have R already installed. This skips
+# setup-r, whose system package install was the slowest part of each run.
+#
+# Ubuntu only during development. PRs: R release only. main + manual: release,
+# oldrel and devel. Add macOS and Windows back once dev is done (#37); they
+# cannot use containers and need setup-r.
 on:
   push:
     branches: [main, master]
@@ -10,6 +14,7 @@ on:
       - "R/**"
       - "tests/**"
       - "man/**"
+      - "inst/**"
       - "DESCRIPTION"
       - "NAMESPACE"
       - ".github/workflows/R-CMD-check.yaml"
@@ -25,15 +30,15 @@ permissions: read-all
 jobs:
   R-CMD-check:
     if: github.event.pull_request.draft != true
-    runs-on: ${{ matrix.config.os }}
+    runs-on: ubuntu-latest
+    container: rocker/r-ver:${{ matrix.r }}
 
-    name: ${{ matrix.config.os }} (${{ matrix.config.r }})
+    name: ubuntu (${{ matrix.r }})
 
     strategy:
       fail-fast: false
       matrix:
-        config: ${{ fromJSON(github.event_name == 'pull_request' && '[{"os":"ubuntu-latest","r":"release"}]' || '[{"os":"ubuntu-latest","r":"release"},{"os":"ubuntu-latest","r":"devel","http-user-agent":"release"},{"os":"ubuntu-latest","r":"oldrel-1"}]') }}
-        # Later: {"os":"macos-latest","r":"release"}, {"os":"windows-latest","r":"release"}
+        r: ${{ fromJSON(github.event_name == 'pull_request' && '["4.6"]' || '["4.6", "4.5", "devel"]') }}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -41,14 +46,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-
-      - uses: r-lib/actions/setup-pandoc@v2
-
-      - uses: r-lib/actions/setup-r@v2
-        with:
-          r-version: ${{ matrix.config.r }}
-          http-user-agent: ${{ matrix.config.http-user-agent }}
-          use-public-rspm: true
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
@@ -58,4 +55,4 @@ jobs:
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
-          build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'
+          build_args: 'c("--no-manual")'
