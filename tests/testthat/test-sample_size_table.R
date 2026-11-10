@@ -29,7 +29,9 @@ test_that("each cell matches sample_size() called directly", {
 test_that("keeps the settings used", {
   tab <- sample_size_table(n_strata = 3, alpha = 0.1, power = 0.8, max_n = 50)
   expect_s3_class(tab, "sample_size_table")
-  expect_equal(attr(tab, "settings"),
+  expect_s3_class(attr(tab, "settings"), "sample_size_control")
+  expect_equal(unclass(attr(tab, "settings"))[c("n_strata", "alpha", "power",
+                                                "max_n")],
                list(n_strata = 3, alpha = 0.1, power = 0.8, max_n = 50))
 })
 

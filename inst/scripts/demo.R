@@ -27,6 +27,12 @@ stratum_by <- "Substratum"
 guessed_cv <- 20
 delta      <- 40
 
+# Settings for the number of sample units. Every setting has a default, so
+# only write the ones you want to change, for example
+# sample_size_control(alpha = 0.1, power = 0.8). Run sample_size_control()
+# on its own to see them all.
+sample_size_settings <- sample_size_control()
+
 
 # ---- 1. Load the data --------------------------------------------------------
 
@@ -47,11 +53,11 @@ one_stratum
 # ---- 3. Number of sample units needed ----------------------------------------
 
 # Sample units needed per stratum for the guessed CV and delta
-sample_size(cv = guessed_cv, delta = delta)
+sample_size(cv = guessed_cv, delta = delta, control = sample_size_settings)
 
-# The same for a range of CVs and deltas. With no settings this recreates
-# Table 1 of Durden et al. (2016).
-needed <- sample_size_table()
+# The same for a range of CVs and deltas. With the default settings this
+# recreates Table 1 of Durden et al. (2016).
+needed <- sample_size_table(control = sample_size_settings)
 needed
 
 # As a heatmap. Cells needing more than 10 sample units are greyed out, as in

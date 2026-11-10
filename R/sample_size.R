@@ -16,15 +16,17 @@
 #'
 #' @param cv Coefficient of variation of the metric, in %.
 #' @param delta Smallest true difference to detect, in % of the mean.
-#' @param n_strata Number of strata (groups) being compared, \eqn{a}.
-#' @param alpha Significance level, two-tailed.
-#' @param power Power of the test, \eqn{P}. Note Durden et al. (2016) also use
-#'   P for significance in the text; here they are separate.
-#' @param max_n Largest n to try. Returns `NA` if more are needed.
+#' @param control Settings from [sample_size_control()]: the significance
+#'   level \eqn{\alpha}, the power \eqn{P}, the number of strata \eqn{a} and
+#'   the largest n to try. Can also be a list, such as `list(alpha = 0.1)`.
+#'   Durden et al. (2016) use P for both power and significance in the text;
+#'   here they are separate.
+#' @param ... Settings to change, given straight to the function, such as
+#'   `alpha = 0.1`. These override any in `control`.
 #'
 #' @return Integer vector of SUs required per stratum, one per pair of `cv`
 #'   and `delta` (recycled to the same length). `NA` where more than `max_n`
-#'   are needed.
+#'   (see [sample_size_control()]) are needed.
 #'
 #' @references
 #' Durden, J.M., Schoening, T., Althaus, F., et al. (2016). Perspectives in
@@ -41,21 +43,22 @@
 #'
 #' # One CV with many differences
 #' sample_size(cv = 30, delta = c(20, 40, 80))
+#'
+#' # Change a setting. These three lines give the same result.
+#' sample_size(20, 40, control = sample_size_control(alpha = 0.1))
+#' sample_size(20, 40, control = list(alpha = 0.1))
+#' sample_size(20, 40, alpha = 0.1)
 #' @export
-sample_size <- function(cv, delta, n_strata = 2, alpha = 0.05, power = 0.9,
-                        max_n = 100) {
+sample_size <- function(cv, delta, control = sample_size_control(), ...) {
   check_positive(cv, "cv")
   check_positive(delta, "delta")
-  check_probability(alpha, "alpha")
-  check_probability(power, "power")
-  check_count(n_strata, "n_strata", min = 2)
-  check_count(max_n, "max_n", min = 2)
+  ctl <- resolve_control(control, list(...), sample_size_control)
 
   one <- function(cv, delta) {
-    for (n in 2:max_n) {
-      v <- n_strata * (n - 1)
-      t_alpha <- stats::qt(1 - alpha / 2, v) # two-tailed at alpha
-      t_power <- stats::qt(power, v)         # t_2(1-P)[v] is two-tailed at 2(1 - P)
+    for (n in 2:ctl$max_n) {
+      v <- ctl$n_strata * (n - 1)
+      t_alpha <- stats::qt(1 - ctl$alpha / 2, v) # two-tailed at alpha
+      t_power <- stats::qt(ctl$power, v) # t_2(1-P)[v] is two-tailed at 2(1 - P)
       rhs <- 2 * (cv / delta)^2 * (t_alpha + t_power)^2
       if (n >= rhs) return(as.integer(n))
     }
@@ -79,7 +82,8 @@ sample_size <- function(cv, delta, n_strata = 2, alpha = 0.05, power = 0.9,
 #' @return A `sample_size_table` object. This is an integer matrix with one row
 #'   per `cv` and one column per `delta`, holding the SUs required per stratum.
 #'   Cells are `NA` where more than `max_n` are needed. The settings used are
-#'   kept in `attr(x, "settings")`. Use `plot()` to draw it as a heatmap.
+#'   kept in `attr(x, "settings")` as a [sample_size_control()] object. Use
+#'   `plot()` to draw it as a heatmap.
 #'
 #' @references
 #' Durden, J.M., Schoening, T., Althaus, F., et al. (2016). Perspectives in
@@ -100,16 +104,14 @@ sample_size <- function(cv, delta, n_strata = 2, alpha = 0.05, power = 0.9,
 #' @export
 sample_size_table <- function(cv = seq(5, 50, 5),
                               delta = c(10, 14, 20, 28, 40, 56, 79, 112, 158, 224),
-                              n_strata = 2, alpha = 0.05, power = 0.9,
-                              max_n = 100) {
+                              control = sample_size_control(), ...) {
+  ctl <- resolve_control(control, list(...), sample_size_control)
   grid <- expand.grid(cv = cv, delta = delta)
-  n <- sample_size(grid$cv, grid$delta, n_strata = n_strata, alpha = alpha,
-                   power = power, max_n = max_n)
+  n <- sample_size(grid$cv, grid$delta, control = ctl)
 
   structure(
     matrix(n, nrow = length(cv), dimnames = list(cv = cv, delta = delta)),
-    settings = list(n_strata = n_strata, alpha = alpha, power = power,
-                    max_n = max_n),
+    settings = ctl,
     class = "sample_size_table"
   )
 }
