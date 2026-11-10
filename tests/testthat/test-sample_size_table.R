@@ -107,14 +107,11 @@ test_that("plot draws the crosshair and colour key in all cases", {
   expect_no_error(plot(sample_size_table(cv = 50, delta = 10, max_n = 5)))
 })
 
-test_that("plot takes a data citation for the footer, never empty", {
+test_that("plot has no data citation, as the table uses no survey data", {
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off())
-  tab <- sample_size_table()
-
-  expect_no_error(plot(tab, data_citation = "Planned survey of Haig Fras"))
-  expect_error(plot(tab, data_citation = ""), "data_citation")
-  expect_error(plot(tab, data_citation = NA_character_), "data_citation")
+  expect_false("data_citation" %in% names(formals(plot.sample_size_table)))
+  expect_no_error(plot(sample_size_table()))
 })
 
 test_that("plot looks the same in any window size, and leaves text size alone", {
