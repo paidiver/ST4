@@ -4,7 +4,16 @@
 \alias{plot.sample_size_table}
 \title{Plot a table of sample units required}
 \usage{
-\method{plot}{sample_size_table}(x, max_shown = NULL, main = "Sample units required per stratum", ...)
+\method{plot}{sample_size_table}(
+  x,
+  max_shown = NULL,
+  main = "Sample units required per stratum",
+  strata = NULL,
+  highlight = NULL,
+  data_citation = "No Data Citation",
+  settings_panel = TRUE,
+  ...
+)
 }
 \arguments{
 \item{x}{A \code{sample_size_table} object from \code{\link[=sample_size_table]{sample_size_table()}}.}
@@ -14,6 +23,24 @@ coloured. Durden et al. (2016) grey out cells above 10. By default no
 cells are greyed out, unless \code{max_n} is set and cells need more.}
 
 \item{main}{Plot title.}
+
+\item{strata}{Optional names of the strata you plan to compare, such as
+\code{c("sand", "hard")}. Only used as a label in the settings panel. There
+must be one name per stratum the table was made for (\code{n_strata} in
+\code{\link[=sample_size_control]{sample_size_control()}}).}
+
+\item{highlight}{Optional CV and delta to mark, such as
+\code{c(cv = 20, delta = 40)}, for example your guessed CV and the difference
+you want to detect. The matching cell is outlined, and the panel shows
+the sample units needed. Values that are not in the table's grid are
+still worked out and shown in the panel, but no cell is outlined.}
+
+\item{data_citation}{Free text describing or citing the data the plot is
+for, shown at the bottom left. The table itself is not made from data,
+so this is only a label. Defaults to "No Data Citation" and cannot be
+left empty.}
+
+\item{settings_panel}{Show the run settings panel on the right.}
 
 \item{...}{Other graphical arguments passed on to \code{\link[graphics:image]{graphics::image()}}.}
 }
@@ -25,6 +52,16 @@ Draws a \code{\link[=sample_size_table]{sample_size_table()}} as a heatmap with 
 along the top, laid out like Table 1 of Durden et al. (2016). Each cell
 shows the number of SUs required per stratum. Darker cells need more SUs.
 }
+\details{
+A panel on the right lists the settings the table was made with, so a saved
+plot explains itself.
+}
 \examples{
 plot(sample_size_table(), max_shown = 10)
+
+# Name the strata you plan to compare
+plot(sample_size_table(), strata = c("sand", "hard"))
+
+# Mark your guessed CV and the difference you want to detect
+plot(sample_size_table(), highlight = c(cv = 20, delta = 40))
 }

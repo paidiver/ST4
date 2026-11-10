@@ -56,7 +56,8 @@ test_that("uses other column names when given", {
   m <- metadata_df()
   names(m)[1:2] <- c("tile_id", "area")
   x <- read_counts(counts_df(), m, id = "tile_id", area = "area")
-  expect_equal(x$settings, list(id = "tile_id", area = "area"))
+  expect_equal(x$settings$id, "tile_id")
+  expect_equal(x$settings$area, "area")
 })
 
 test_that("stops when tile ids do not match", {
@@ -95,7 +96,36 @@ test_that("stops on bad metadata", {
 
 test_that("print gives a summary", {
   x <- read_counts(counts_df(), metadata_df())
-  expect_output(print(x), "Tiles: 3")
+  expect_output(print(x), "Stratum: all \\(none selected\\)")
+  expect_output(print(x), "Units: 3 tiles")
   expect_output(print(x), "Individuals: 7")
   expect_output(print(x), "Other metadata: Substratum")
+})
+
+test_that("has a data citation, by default 'No Data Citation'", {
+  x <- read_counts(counts_df(), metadata_df())
+  expect_equal(x$settings$data_citation, "No Data Citation")
+  expect_output(print(x), "Data citation: No Data Citation")
+
+  y <- read_counts(counts_df(), metadata_df(),
+                   data_citation = "  Made-up example tiles  ")
+  # Spaces at either end are trimmed
+  expect_equal(y$settings$data_citation, "Made-up example tiles")
+})
+
+test_that("the data citation cannot be removed or left empty", {
+  for (bad in list("", "   ", NA_character_, NULL, character(0),
+                   c("a", "b"), 42)) {
+    expect_error(read_counts(counts_df(), metadata_df(), data_citation = bad),
+                 "data_citation")
+  }
+})
+
+test_that("the data citation is carried through later steps", {
+  x <- read_counts(counts_df(), metadata_df(), data_citation = "Survey X")
+  y <- select_stratum(x, "sand")
+  expect_equal(y$settings$data_citation, "Survey X")
+  expect_output(print(metric_cv(y)), "Data citation: Survey X")
+  expect_output(print(sample_size_data(y, delta = 50)),
+                "Data citation: Survey X")
 })

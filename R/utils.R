@@ -18,3 +18,11 @@ check_count <- function(x, name, min) {
          call. = FALSE)
   }
 }
+
+# A single piece of text that is not empty or only spaces
+check_text <- function(x, name) {
+  if (!is.character(x) || length(x) != 1 || is.na(x) || !nzchar(trimws(x))) {
+    stop("`", name, "` must be a single piece of text, and cannot be empty.",
+         call. = FALSE)
+  }
+}

@@ -17,6 +17,10 @@ library(ST4)
 counts_file   <- system.file("extdata", "synthetic_counts.csv", package = "ST4")
 metadata_file <- system.file("extdata", "synthetic_metadata.csv", package = "ST4")
 
+# Describe or cite your data. This is shown on every result, so it is always
+# clear where the data came from.
+data_citation <- "Synthetic example data from the ST4 package (made-up values)"
+
 # The stratum to look at, and the metadata column it is in
 stratum    <- "sand"
 stratum_by <- "Substratum"
@@ -41,7 +45,8 @@ sample_size_settings <- sample_size_control()
 # ---- 1. Load the data --------------------------------------------------------
 
 # Reads both files and joins them by tile id
-survey <- read_counts(counts_file, metadata_file)
+survey <- read_counts(counts_file, metadata_file,
+                      data_citation = data_citation)
 survey
 
 # Counts for the first few tiles and taxa
@@ -73,8 +78,9 @@ needed <- sample_size_table(control = sample_size_settings)
 needed
 
 # As a heatmap. Cells needing more than 10 sample units are greyed out, as in
-# the paper.
-plot(needed, max_shown = 10)
+# the paper. Your guessed CV and delta are outlined, and the panel on the
+# right lists the settings used.
+plot(needed, max_shown = 10, highlight = c(cv = guessed_cv, delta = delta))
 
 # Instead of guessing the CV, work it out from the data for each metric.
 # Different metrics vary by different amounts, so the survey should be

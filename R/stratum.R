@@ -50,7 +50,9 @@ select_stratum <- function(x, stratum, by = "Substratum") {
   meta <- x$meta[keep, , drop = FALSE]
   rownames(meta) <- NULL
   out <- new_su_data(x$comm[keep, , drop = FALSE], meta,
-                     id = x$settings$id, area = x$settings$area)
+                     id = x$settings$id, area = x$settings$area,
+                     data_citation = x$settings$data_citation,
+                     unit = x$settings$unit)
   out$settings$by <- by
   out$settings$stratum <- stratum
   out

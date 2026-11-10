@@ -55,6 +55,10 @@ test_that("strata split the data with nothing lost", {
                sum(x$comm))
 })
 
+test_that("keeps the unit type", {
+  expect_equal(select_stratum(strata_data(), "sand")$settings$unit, "tiles")
+})
+
 test_that("print shows the stratum", {
   expect_output(print(select_stratum(strata_data(), "sand")),
                 "Stratum: Substratum = sand")
