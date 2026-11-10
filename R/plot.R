@@ -21,10 +21,6 @@
 #'   you want to detect. The matching cell is outlined, and the panel shows
 #'   the sample units needed. Values that are not in the table's grid are
 #'   still worked out and shown in the panel, but no cell is outlined.
-#' @param data_citation Free text describing or citing the data the plot is
-#'   for, shown at the bottom left. The table itself is not made from data,
-#'   so this is only a label. Defaults to "No Data Citation" and cannot be
-#'   left empty.
 #' @param settings_panel Show the run settings panel on the right.
 #' @param ... Other graphical arguments passed on to [graphics::image()].
 #'
@@ -42,10 +38,8 @@
 plot.sample_size_table <- function(x, max_shown = NULL,
                                    main = "Sample units required per stratum",
                                    strata = NULL, highlight = NULL,
-                                   data_citation = "No Data Citation",
                                    settings_panel = TRUE, ...) {
   s <- attr(x, "settings")
-  check_text(data_citation, "data_citation")
   if (!is.null(highlight)) {
     if (!is.numeric(highlight) || length(highlight) != 2 ||
         !setequal(names(highlight), c("cv", "delta"))) {
@@ -145,13 +139,13 @@ plot.sample_size_table <- function(x, max_shown = NULL,
       z = z, cv = cv, delta = delta, greyed = greyed, colours = colours,
       lo = lo, hi = hi, labels = labels, text_col = text_col,
       hl_col = hl_col, hl_row = hl_row, hl_y = hl_y, main = main,
-      data_citation = data_citation, items = items, key = key,
+      items = items, key = key,
       highlighted = !is.null(highlight), image_args = dots
     ),
     list(z = z, cv = cv, delta = delta, greyed = greyed, colours = colours,
          lo = lo, hi = hi, labels = labels, text_col = text_col,
          hl_col = hl_col, hl_row = hl_row, hl_y = hl_y, main = main,
-         data_citation = data_citation, items = items, key = key,
+         items = items, key = key,
          highlight = highlight, dots = dots),
     getNamespace("ST4")
   )
@@ -163,7 +157,7 @@ plot.sample_size_table <- function(x, max_shown = NULL,
 # is worked out here, so it is right every time the plot is redrawn.
 draw_sample_size_plot <- function(z, cv, delta, greyed, colours, lo, hi,
                                   labels, text_col, hl_col, hl_row, hl_y,
-                                  main, data_citation, items, key,
+                                  main, items, key,
                                   highlighted, image_args) {
   # Outer margin at the bottom for the footer
   graphics::par(oma = c(1.3, 0, 0, 0))
@@ -225,7 +219,10 @@ draw_sample_size_plot <- function(z, cv, delta, greyed, colours, lo, hi,
                    border = highlight_colour, lwd = 4)
   }
 
-  plot_footer(data_citation, "Durden et al. (2016) Eqn 1")
+  # No survey data goes into this table, so the footer gives the equation
+  # that made it instead of a data citation
+  plot_footer(paste("Made with Durden et al. (2016) Eqn 1, from Sokal &",
+                    "Rohlf (1995), for assumed CVs. No survey data used."))
 
   if (!is.null(items)) {
     draw_settings_panel(items,
@@ -394,19 +391,18 @@ margin_box <- function(left, right, bottom, top, col = "grey97",
                r = 0.6 * per_line_x, col = col, border = border)
 }
 
-# Small grey line along the bottom of the whole figure: the data citation on
-# the left, the method reference and package version on the right. Needs an
-# outer margin at the bottom (par(oma)).
-plot_footer <- function(data_citation, method) {
+# Small grey line along the bottom of the whole figure: `text` on the left
+# (the data citation for plots of data, or the method for the heatmap) and the
+# package version on the right. Needs an outer margin at the bottom
+# (par(oma)).
+plot_footer <- function(text) {
   pkg <- utils::packageName()
   size <- 0.65 * graphics::par("cex") # mtext() sizes are absolute
-  graphics::mtext(paste("Data:", trimws(data_citation)), side = 1,
-                  line = 0.2, outer = TRUE, adj = 0.005, cex = size,
-                  col = "grey45")
-  graphics::mtext(paste0("Method: ", method, " \u00b7 ", pkg, " ",
-                         utils::packageVersion(pkg)),
-                  side = 1, line = 0.2, outer = TRUE, adj = 0.995,
+  graphics::mtext(text, side = 1, line = 0.2, outer = TRUE, adj = 0.005,
                   cex = size, col = "grey45")
+  graphics::mtext(paste(pkg, utils::packageVersion(pkg)), side = 1,
+                  line = 0.2, outer = TRUE, adj = 0.995, cex = size,
+                  col = "grey45")
 }
 
 

@@ -73,3 +73,17 @@ test_that("rejects bad input", {
   expect_error(sample_size(20, 40, n_strata = 1), "n_strata")
   expect_error(sample_size(20, 40, max_n = 2.5), "max_n")
 })
+
+test_that("matches base R's exact two-sample t-test power calculation", {
+  # power.t.test() solves for n with the noncentral t distribution. With the
+  # CV as the standard deviation and delta as the difference (both in % of
+  # the mean), its n rounded up should match Eqn 1 for 2 strata.
+  for (cv in c(10, 20, 30, 50)) {
+    for (delta in c(20, 40, 79)) {
+      exact <- ceiling(stats::power.t.test(delta = delta, sd = cv,
+                                           sig.level = 0.05,
+                                           power = 0.9)$n)
+      expect_equal(sample_size(cv, delta), exact)
+    }
+  }
+})

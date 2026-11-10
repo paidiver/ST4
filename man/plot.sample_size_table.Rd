@@ -10,7 +10,6 @@
   main = "Sample units required per stratum",
   strata = NULL,
   highlight = NULL,
-  data_citation = "No Data Citation",
   settings_panel = TRUE,
   ...
 )
@@ -34,11 +33,6 @@ must be one name per stratum the table was made for (\code{n_strata} in
 you want to detect. The matching cell is outlined, and the panel shows
 the sample units needed. Values that are not in the table's grid are
 still worked out and shown in the panel, but no cell is outlined.}
-
-\item{data_citation}{Free text describing or citing the data the plot is
-for, shown at the bottom left. The table itself is not made from data,
-so this is only a label. Defaults to "No Data Citation" and cannot be
-left empty.}
 
 \item{settings_panel}{Show the run settings panel on the right.}
 
