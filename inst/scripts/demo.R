@@ -21,6 +21,10 @@ metadata_file <- system.file("extdata", "synthetic_metadata.csv", package = "ST4
 stratum    <- "sand"
 stratum_by <- "Substratum"
 
+# The metrics to calculate. Built in: richness, abundance, density, shannon,
+# simpson, invsimpson, pielou. See ?su_metrics for how to add others.
+metrics <- c("richness", "density", "shannon")
+
 # For the number of sample units: your best guess at the coefficient of
 # variation (CV, %) of the metric, and the smallest difference between
 # strata you want to be able to detect (delta, % of the mean)
@@ -50,7 +54,15 @@ one_stratum <- select_stratum(survey, stratum, by = stratum_by)
 one_stratum
 
 
-# ---- 3. Number of sample units needed ----------------------------------------
+# ---- 3. Metrics for each tile ------------------------------------------------
+
+# Calculated by vegan. One row per tile.
+tile_metrics <- su_metrics(one_stratum, metrics)
+head(tile_metrics)
+summary(tile_metrics[metrics])
+
+
+# ---- 4. Number of sample units needed ----------------------------------------
 
 # Sample units needed per stratum for the guessed CV and delta
 sample_size(cv = guessed_cv, delta = delta, control = sample_size_settings)
@@ -68,6 +80,5 @@ plot(needed, max_shown = 10)
 # ---- Coming later ------------------------------------------------------------
 # These steps will be added as the package grows:
 #   - build composite sample units within the stratum
-#   - calculate metrics such as richness with vegan
 #   - sample unit size curves and their diagnostics
 #   - number of sample units from the CV of your own data

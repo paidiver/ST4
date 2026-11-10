@@ -19,4 +19,6 @@ test_that("the demo script runs from start to finish", {
   expect_s3_class(env$survey, "su_data")
   expect_equal(env$one_stratum$settings$stratum, "sand")
   expect_s3_class(env$needed, "sample_size_table")
+  expect_equal(names(env$tile_metrics),
+               c("FileName", "richness", "density", "shannon"))
 })
