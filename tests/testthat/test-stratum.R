@@ -34,6 +34,7 @@ test_that("keeps all taxa and the counts for kept tiles", {
   y <- select_stratum(x, "sand")
   expect_equal(colnames(y$comm), colnames(x$comm))
   expect_equal(y$comm, x$comm[c("t2", "t3"), ])
+  # Sand tiles t2 and t3: asterias 0 + 1 = 1, cerianthid 3 + 1 = 4, total 5
   expect_equal(sum(y$comm), 5)
 })
 

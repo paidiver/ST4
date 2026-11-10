@@ -22,6 +22,8 @@ test_that("joins by tile id, not by row order", {
   expect_s3_class(x, "su_data")
   expect_equal(rownames(x$comm), c("t1", "t2", "t3"))
   expect_equal(x$meta$FileName, c("t1", "t2", "t3"))
+  # metadata lists t3, t1, t2, so after the join the areas move to
+  # t1 = 7.4, t2 = 6.9, t3 = 7.1
   expect_equal(x$meta$Area_seabed_m2, c(7.4, 6.9, 7.1))
   expect_equal(x$meta$Substratum, c("hard", "sand", "sand"))
   expect_equal(unname(x$comm[, "cerianthid"]), c(0, 3, 1))
@@ -29,7 +31,9 @@ test_that("joins by tile id, not by row order", {
 
 test_that("keeps the totals", {
   x <- read_counts(counts_df(), metadata_df())
+  # Counts: asterias 2 + 0 + 1 = 3, cerianthid 0 + 3 + 1 = 4, total 7
   expect_equal(sum(x$comm), 7)
+  # Area: 7.1 + 7.4 + 6.9 = 21.4
   expect_equal(sum(x$meta$Area_seabed_m2), 21.4)
   expect_equal(dim(x$comm), c(3, 2))
 })
