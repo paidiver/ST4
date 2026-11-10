@@ -2,7 +2,7 @@ test_that("has the defaults", {
   ctl <- sample_size_control()
   expect_s3_class(ctl, "sample_size_control")
   expect_equal(unclass(ctl)[c("alpha", "power", "n_strata", "max_n")],
-               list(alpha = 0.05, power = 0.9, n_strata = 2, max_n = 100))
+               list(alpha = 0.05, power = 0.9, n_strata = 2, max_n = Inf))
   expect_length(attr(ctl, "changed"), 0)
 })
 

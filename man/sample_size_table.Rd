@@ -29,7 +29,7 @@ here they are separate.}
 \value{
 A \code{sample_size_table} object. This is an integer matrix with one row
 per \code{cv} and one column per \code{delta}, holding the SUs required per stratum.
-Cells are \code{NA} where more than \code{max_n} are needed. The settings used are
+Cells are \code{NA} only where \code{max_n} is set and more than that are needed. The settings used are
 kept in \code{attr(x, "settings")} as a \code{\link[=sample_size_control]{sample_size_control()}} object. Use
 \code{plot()} to draw it as a heatmap.
 }

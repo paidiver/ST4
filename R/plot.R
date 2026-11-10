@@ -6,8 +6,8 @@
 #'
 #' @param x A `sample_size_table` object from [sample_size_table()].
 #' @param max_shown Cells needing more than this are greyed out instead of
-#'   coloured. Durden et al. (2016) grey out cells above 10. By default only
-#'   cells above `max_n` are greyed out.
+#'   coloured. Durden et al. (2016) grey out cells above 10. By default no
+#'   cells are greyed out, unless `max_n` is set and cells need more.
 #' @param main Plot title.
 #' @param ... Other graphical arguments passed on to [graphics::image()].
 #'

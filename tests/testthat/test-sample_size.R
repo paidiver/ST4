@@ -2,7 +2,7 @@
 
 test_that("reproduces Durden et al. (2016) Table 1", {
   grid <- expand.grid(cv = table1_cv, delta = table1_delta)
-  n <- sample_size(grid$cv, grid$delta, max_n = 1000)
+  n <- sample_size(grid$cv, grid$delta)
   got <- matrix(n, nrow = length(table1_cv))
 
   shown <- !is.na(durden_table1)
@@ -21,6 +21,39 @@ test_that("recycles cv and delta", {
   expect_equal(sample_size(30, c(20, 40, 80)),
                c(sample_size(30, 20), sample_size(30, 40), sample_size(30, 80)))
   expect_length(sample_size(c(10, 20), c(40, 80)), 2)
+})
+
+test_that("has no upper limit by default", {
+  # Durden's grey cells come out as real numbers, e.g. CV 50 and delta 10
+  n <- sample_size(50, 10)
+  expect_false(is.na(n))
+  expect_gt(n, 100)
+})
+
+test_that("the faster search start gives the same answers as starting at 2", {
+  # Plain search from n = 2, as in the original script
+  from_two <- function(cv, delta, alpha, power, n_strata) {
+    n <- 2
+    repeat {
+      v <- n_strata * (n - 1)
+      rhs <- 2 * (cv / delta)^2 *
+        (stats::qt(1 - alpha / 2, v) + stats::qt(power, v))^2
+      if (n >= rhs) return(as.integer(n))
+      n <- n + 1
+    }
+  }
+  # Includes power below 0.5, where the faster start is not used
+  for (s in list(c(0.05, 0.9, 2), c(0.1, 0.8, 3), c(0.01, 0.95, 2),
+                 c(0.05, 0.3, 2))) {
+    for (cv in c(5, 20, 50)) {
+      for (delta in c(10, 40, 224)) {
+        expect_equal(
+          sample_size(cv, delta, alpha = s[1], power = s[2], n_strata = s[3]),
+          from_two(cv, delta, s[1], s[2], s[3])
+        )
+      }
+    }
+  }
 })
 
 test_that("returns NA when more than max_n needed", {

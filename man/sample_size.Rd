@@ -22,8 +22,9 @@ here they are separate.}
 }
 \value{
 Integer vector of SUs required per stratum, one per pair of \code{cv}
-and \code{delta} (recycled to the same length). \code{NA} where more than \code{max_n}
-(see \code{\link[=sample_size_control]{sample_size_control()}}) are needed.
+and \code{delta} (recycled to the same length). There is no upper limit by
+default. If \code{max_n} is set (see \code{\link[=sample_size_control]{sample_size_control()}}), \code{NA} where more
+than \code{max_n} are needed.
 }
 \description{
 Smallest number of sample units (SUs) per stratum needed to detect a given
@@ -39,7 +40,10 @@ the test. Both t values are two-tailed: \eqn{t_{\alpha[v]}} is
 \code{qt(1 - alpha / 2, v)} and \eqn{t_{2(1-P)[v]}} is \code{qt(power, v)}.
 
 n appears on both sides (through \eqn{v}), so it is found by stepping n up
-from 2 until the inequality holds.
+until the inequality holds. When the power is 0.5 or more, the search
+starts from the same formula with normal (z) values in place of t values.
+Those t values are always larger than the z values, so no smaller n can
+work and the result is the same as starting from n = 2, only faster.
 }
 \examples{
 # Detect a 40\% difference between 2 strata when the CV is 20\%

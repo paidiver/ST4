@@ -34,7 +34,7 @@ here they are separate.}
 A \code{sample_size_data} object. This is the \code{\link[=metric_cv]{metric_cv()}} table with
 one extra column per \code{delta}, named like \code{n_delta_40}, holding the
 sample units required per stratum. \code{NA} where the CV could not be
-calculated or more than \code{max_n} are needed. The settings used are kept in
+calculated, or where \code{max_n} is set and more than that are needed. The settings used are kept in
 \code{attr(x, "settings")} and the deltas in \code{attr(x, "delta")}.
 }
 \description{
