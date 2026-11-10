@@ -7,10 +7,8 @@
 sample_size_table(
   cv = seq(5, 50, 5),
   delta = c(10, 14, 20, 28, 40, 56, 79, 112, 158, 224),
-  n_strata = 2,
-  alpha = 0.05,
-  power = 0.9,
-  max_n = 100
+  control = sample_size_control(),
+  ...
 )
 }
 \arguments{
@@ -19,20 +17,21 @@ sample_size_table(
 \item{delta}{Smallest true differences to detect, in \% of the mean. These
 become the table columns.}
 
-\item{n_strata}{Number of strata (groups) being compared, \eqn{a}.}
+\item{control}{Settings from \code{\link[=sample_size_control]{sample_size_control()}}: the significance
+level \eqn{\alpha}, the power \eqn{P}, the number of strata \eqn{a} and
+the largest n to try. Can also be a list, such as \code{list(alpha = 0.1)}.
+Durden et al. (2016) use P for both power and significance in the text;
+here they are separate.}
 
-\item{alpha}{Significance level, two-tailed.}
-
-\item{power}{Power of the test, \eqn{P}. Note Durden et al. (2016) also use
-P for significance in the text; here they are separate.}
-
-\item{max_n}{Largest n to try. Returns \code{NA} if more are needed.}
+\item{...}{Settings to change, given straight to the function, such as
+\code{alpha = 0.1}. These override any in \code{control}.}
 }
 \value{
 A \code{sample_size_table} object. This is an integer matrix with one row
 per \code{cv} and one column per \code{delta}, holding the SUs required per stratum.
 Cells are \code{NA} where more than \code{max_n} are needed. The settings used are
-kept in \code{attr(x, "settings")}. Use \code{plot()} to draw it as a heatmap.
+kept in \code{attr(x, "settings")} as a \code{\link[=sample_size_control]{sample_size_control()}} object. Use
+\code{plot()} to draw it as a heatmap.
 }
 \description{
 Runs \code{\link[=sample_size]{sample_size()}} for every combination of \code{cv} and \code{delta}. The

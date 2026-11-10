@@ -4,26 +4,26 @@
 \alias{sample_size}
 \title{Number of sample units required}
 \usage{
-sample_size(cv, delta, n_strata = 2, alpha = 0.05, power = 0.9, max_n = 100)
+sample_size(cv, delta, control = sample_size_control(), ...)
 }
 \arguments{
 \item{cv}{Coefficient of variation of the metric, in \%.}
 
 \item{delta}{Smallest true difference to detect, in \% of the mean.}
 
-\item{n_strata}{Number of strata (groups) being compared, \eqn{a}.}
+\item{control}{Settings from \code{\link[=sample_size_control]{sample_size_control()}}: the significance
+level \eqn{\alpha}, the power \eqn{P}, the number of strata \eqn{a} and
+the largest n to try. Can also be a list, such as \code{list(alpha = 0.1)}.
+Durden et al. (2016) use P for both power and significance in the text;
+here they are separate.}
 
-\item{alpha}{Significance level, two-tailed.}
-
-\item{power}{Power of the test, \eqn{P}. Note Durden et al. (2016) also use
-P for significance in the text; here they are separate.}
-
-\item{max_n}{Largest n to try. Returns \code{NA} if more are needed.}
+\item{...}{Settings to change, given straight to the function, such as
+\code{alpha = 0.1}. These override any in \code{control}.}
 }
 \value{
 Integer vector of SUs required per stratum, one per pair of \code{cv}
 and \code{delta} (recycled to the same length). \code{NA} where more than \code{max_n}
-are needed.
+(see \code{\link[=sample_size_control]{sample_size_control()}}) are needed.
 }
 \description{
 Smallest number of sample units (SUs) per stratum needed to detect a given
@@ -47,6 +47,11 @@ sample_size(cv = 20, delta = 40)
 
 # One CV with many differences
 sample_size(cv = 30, delta = c(20, 40, 80))
+
+# Change a setting. These three lines give the same result.
+sample_size(20, 40, control = sample_size_control(alpha = 0.1))
+sample_size(20, 40, control = list(alpha = 0.1))
+sample_size(20, 40, alpha = 0.1)
 }
 \references{
 Durden, J.M., Schoening, T., Althaus, F., et al. (2016). Perspectives in
