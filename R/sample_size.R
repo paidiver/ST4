@@ -130,3 +130,84 @@ print.sample_size_table <- function(x, ...) {
   print(out, quote = FALSE, right = TRUE)
   invisible(x)
 }
+
+#' Number of sample units required, from survey data
+#'
+#' Works out the coefficient of variation (CV) of each metric from pilot or
+#' survey data with [metric_cv()], then the number of sample units needed per
+#' stratum for each metric with [sample_size()].
+#'
+#' Different metrics vary by different amounts, so they need different
+#' numbers of sample units. The survey should be designed for the metric
+#' that needs the most, which is flagged as the worst case.
+#'
+#' The CV, and so the answer, depends on the size of the units in `x`. Use
+#' data at the sample unit size you plan to survey with.
+#'
+#' @inheritParams sample_size
+#' @inheritParams su_metrics
+#' @param delta Smallest true differences to detect, in % of the mean. One
+#'   column of results is given for each.
+#' @param ... Settings to change, given straight to the function, such as
+#'   `alpha = 0.1`. See [sample_size_control()].
+#'
+#' @return A `sample_size_data` object. This is the [metric_cv()] table with
+#'   one extra column per `delta`, named like `n_delta_40`, holding the
+#'   sample units required per stratum. `NA` where the CV could not be
+#'   calculated or more than `max_n` are needed. The settings used are kept in
+#'   `attr(x, "settings")` and the deltas in `attr(x, "delta")`.
+#'
+#' @examples
+#' counts_file <- system.file("extdata", "synthetic_counts.csv", package = "ST4")
+#' metadata_file <- system.file("extdata", "synthetic_metadata.csv",
+#'                              package = "ST4")
+#' x <- select_stratum(read_counts(counts_file, metadata_file), "hard")
+#' sample_size_data(x, delta = c(40, 80),
+#'                  metrics = c("richness", "density", "shannon"))
+#' @export
+sample_size_data <- function(x, delta, metrics = "richness",
+                             control = sample_size_control(), ...) {
+  check_positive(delta, "delta")
+  ctl <- resolve_control(control, list(...), sample_size_control)
+  out <- metric_cv(x, metrics)
+
+  for (d in delta) {
+    n <- rep(NA_integer_, nrow(out))
+    ok <- !is.na(out$cv) & out$cv > 0
+    if (any(ok)) n[ok] <- sample_size(out$cv[ok], d, control = ctl)
+    out[[paste0("n_delta_", d)]] <- n
+  }
+
+  structure(out, settings = ctl, delta = delta,
+            class = c("sample_size_data", "data.frame"))
+}
+
+#' @export
+print.sample_size_data <- function(x, ...) {
+  s <- attr(x, "settings")
+  delta <- attr(x, "delta")
+  cat("Sample units required per stratum, from survey data\n")
+  cat("Strata: ", s$n_strata, ", alpha: ", s$alpha, ", power: ", s$power,
+      "\n\n", sep = "")
+
+  df <- as.data.frame(unclass(x), stringsAsFactors = FALSE)
+  attr(df, "settings") <- NULL
+  attr(df, "delta") <- NULL
+  df$mean <- signif(df$mean, 4)
+  df$sd <- signif(df$sd, 4)
+  df$cv <- round(df$cv, 1)
+  for (d in delta) {
+    col <- paste0("n_delta_", d)
+    df[[col]] <- ifelse(is.na(df[[col]]) & !is.na(df$cv),
+                        paste0(">", s$max_n), df[[col]])
+  }
+  print(df, row.names = FALSE, na.print = "NA")
+
+  # Worst case: the metric with the highest CV needs the most sample units
+  if (any(!is.na(x$cv))) {
+    worst <- which.max(x$cv)
+    cat("\nWorst case: ", x$metric[worst], " (CV ", round(x$cv[worst], 1),
+        "%). Design the survey for this metric.\n", sep = "")
+  }
+  invisible(x)
+}

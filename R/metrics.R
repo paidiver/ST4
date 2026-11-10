@@ -145,3 +145,43 @@ as_metric_list <- function(metrics) {
   }
   stats::setNames(metrics, labels)
 }
+
+#' Coefficient of variation of each metric
+#'
+#' Calculates each metric for every tile or sample unit with [su_metrics()],
+#' then gives the mean, standard deviation and coefficient of variation (CV)
+#' of each metric across the units. The CV is what [sample_size()] needs.
+#'
+#' CV (%) = 100 * standard deviation / mean, using the sample standard
+#' deviation ([stats::sd()]). Units where a metric is `NA`, such as Shannon on
+#' a tile with no individuals, are left out for that metric. The CV is `NA`
+#' when the mean is 0 or fewer than 2 units are left.
+#'
+#' The CV depends on the size of the units: it is usually much higher for
+#' single tiles than for composite sample units made of many tiles.
+#'
+#' @inheritParams su_metrics
+#'
+#' @return A data frame with one row per metric and the columns `metric`,
+#'   `n_units` (units used), `mean`, `sd` and `cv` (%).
+#'
+#' @examples
+#' counts_file <- system.file("extdata", "synthetic_counts.csv", package = "ST4")
+#' metadata_file <- system.file("extdata", "synthetic_metadata.csv",
+#'                              package = "ST4")
+#' x <- select_stratum(read_counts(counts_file, metadata_file), "hard")
+#' metric_cv(x, c("richness", "density", "shannon"))
+#' @export
+metric_cv <- function(x, metrics = "richness", ...) {
+  values <- su_metrics(x, metrics, ...)[-1]
+
+  rows <- lapply(names(values), function(name) {
+    v <- values[[name]]
+    v <- v[!is.na(v)]
+    m <- if (length(v) > 0) mean(v) else NA_real_
+    s <- if (length(v) > 1) stats::sd(v) else NA_real_
+    cv <- if (!is.na(m) && !is.na(s) && m != 0) 100 * s / m else NA_real_
+    data.frame(metric = name, n_units = length(v), mean = m, sd = s, cv = cv)
+  })
+  do.call(rbind, rows)
+}
