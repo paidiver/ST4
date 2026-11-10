@@ -82,6 +82,9 @@ read_counts <- function(counts, metadata, id = "FileName",
 print.su_data <- function(x, ...) {
   s <- x$settings
   cat("su_data\n")
+  if (!is.null(s$stratum)) {
+    cat("Stratum: ", s$by, " = ", s$stratum, "\n", sep = "")
+  }
   cat("Tiles: ", nrow(x$comm), "\n", sep = "")
   cat("Taxa: ", ncol(x$comm), "\n", sep = "")
   cat("Individuals: ", sum(x$comm), "\n", sep = "")
