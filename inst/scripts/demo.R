@@ -76,9 +76,17 @@ needed
 # the paper.
 plot(needed, max_shown = 10)
 
+# Instead of guessing the CV, work it out from the data for each metric.
+# Different metrics vary by different amounts, so the survey should be
+# designed for the one that needs the most sample units (the worst case).
+# These are single tiles, so the CVs are high. Composite sample units made of
+# many tiles will vary less and need fewer.
+metric_cv(one_stratum, metrics)
+sample_size_data(one_stratum, delta = delta, metrics = metrics,
+                 control = sample_size_settings)
+
 
 # ---- Coming later ------------------------------------------------------------
 # These steps will be added as the package grows:
 #   - build composite sample units within the stratum
 #   - sample unit size curves and their diagnostics
-#   - number of sample units from the CV of your own data
