@@ -95,6 +95,9 @@ print.su_data <- function(x, ...) {
   cat("Data citation: ", s$data_citation, "\n", sep = "")
   cat("Stratum: ", describe_stratum(x), "\n", sep = "")
   cat("Units: ", nrow(x$comm), " ", s$unit, "\n", sep = "")
+  if (!is.null(s$sample_units)) {
+    cat("SUs built: ", describe_sample_units(x), "\n", sep = "")
+  }
   cat("Taxa: ", ncol(x$comm), "\n", sep = "")
   cat("Individuals: ", sum(x$comm), "\n", sep = "")
   cat("Seabed area: ", format(sum(x$meta[[s$area]]), digits = 6), " m\u00b2\n",
