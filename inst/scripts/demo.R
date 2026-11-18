@@ -47,6 +47,15 @@ table_delta <- c(20, 30, 40, 80, 100)
 # on its own to see them all.
 sample_size_settings <- sample_size_control()
 
+# Settings for building composite sample units (SUs) from tiles. By default
+# each SU is about 150 m² of seabed. Use type = "individuals" for SUs of a set
+# number of individuals, or type = "tiles" for a set number of tiles. Run
+# sample_unit_control() on its own to see them all.
+sample_unit_settings <- sample_unit_control()
+
+# Seed for the random grouping of tiles. The same seed gives the same SUs.
+seed <- 1
+
 
 # ---- 1. Load the data --------------------------------------------------------
 
@@ -98,7 +107,23 @@ sample_size_data(one_stratum, delta = delta, metrics = metrics,
                  control = sample_size_settings)
 
 
+# ---- 5. Composite sample units -----------------------------------------------
+
+# Groups the tiles into SUs at random. Leftover tiles that do not fill an SU
+# are dropped.
+sus <- build_sample_units(one_stratum, control = sample_unit_settings,
+                          seed = seed)
+sus
+
+# The tiles in each SU
+head(sus$members)
+
+# SUs vary much less than single tiles, so they need fewer sample units
+metric_cv(sus, metrics)
+sample_size_data(sus, delta = delta, metrics = metrics,
+                 control = sample_size_settings)
+
+
 # ---- Coming later ------------------------------------------------------------
 # These steps will be added as the package grows:
-#   - build composite sample units within the stratum
 #   - sample unit size curves and their diagnostics

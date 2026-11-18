@@ -21,4 +21,5 @@ test_that("the demo script runs from start to finish", {
   expect_s3_class(env$needed, "sample_size_table")
   expect_equal(names(env$tile_metrics),
                c("FileName", "richness", "density", "shannon"))
+  expect_equal(env$sus$settings$unit, "SUs")
 })
