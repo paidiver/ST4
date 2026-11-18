@@ -32,8 +32,14 @@ metrics <- c("richness", "density", "shannon")
 # For the number of sample units: your best guess at the coefficient of
 # variation (CV, %) of the metric, and the smallest difference between
 # strata you want to be able to detect (delta, % of the mean)
-guessed_cv <- 20
+guessed_cv <- 25
 delta      <- 40
+
+# The CVs (%) and deltas (%) to show in the table and heatmap. Your guessed CV
+# and delta should be in these lists, so they can be outlined on the heatmap.
+# Leave both out of sample_size_table() to get Table 1 of Durden et al. (2016).
+table_cv    <- seq(10, 30, 5)
+table_delta <- c(20, 30, 40, 80, 100)
 
 # Settings for the number of sample units. Every setting has a default, so
 # only write the ones you want to change, for example
@@ -72,9 +78,9 @@ summary(tile_metrics[metrics])
 # Sample units needed per stratum for the guessed CV and delta
 sample_size(cv = guessed_cv, delta = delta, control = sample_size_settings)
 
-# The same for a range of CVs and deltas. With the default settings this
-# recreates Table 1 of Durden et al. (2016).
-needed <- sample_size_table(control = sample_size_settings)
+# The same for the range of CVs and deltas set above
+needed <- sample_size_table(cv = table_cv, delta = table_delta,
+                            control = sample_size_settings)
 needed
 
 # As a heatmap. Cells needing more than 10 sample units are greyed out, as in
