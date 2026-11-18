@@ -16,8 +16,10 @@ and/or named functions. Defaults to richness.}
 Shannon in bits instead of the natural log.}
 }
 \value{
-A data frame with one row per tile or sample unit. The first column
-holds the ids and the others hold one metric each.
+A \code{su_metrics} object: a data frame with one row per tile or
+sample unit. The first column holds the ids and the others hold one
+metric each. Use \link[=plot.su_metrics]{plot()} to see how each metric is
+spread across the units.
 }
 \description{
 Calculates community metrics for each row of an \code{su_data} object. All the

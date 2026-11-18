@@ -90,6 +90,9 @@ tile_metrics <- su_metrics(one_stratum, metrics)
 head(tile_metrics)
 summary(tile_metrics[metrics])
 
+# How each metric is spread across the tiles, with the mean marked
+plot(tile_metrics)
+
 
 # ---- 4. Number of sample units needed ----------------------------------------
 
@@ -119,6 +122,7 @@ plot(needed, max_shown = 10, highlight = c(cv = guessed_cv, delta = delta))
 from_tiles <- sample_size_data(one_stratum, delta = delta, metrics = metrics,
                                control = sample_size_settings)
 from_tiles
+plot(from_tiles)
 
 worst <- which.max(from_tiles$cv)
 cv_estimate <- from_tiles$cv[worst]
@@ -148,6 +152,10 @@ curves
 # number of tiles (images) instead.
 plot(curves)
 
+# All the metrics in one panel, each as a % of its value at the last step.
+# The metric that takes longest to reach 100% needs the biggest SUs.
+plot(curves, compare = TRUE, x_axis = c("tiles", "area"))
+
 # Decision: read the SU size off the curves, in the units of su_type. Here
 # the curves have mostly flattened out and the bands narrowed by about
 # 150 m². Change this and run the steps below again to compare sizes.
@@ -169,6 +177,10 @@ head(sus$members)
 from_sus <- sample_size_data(sus, delta = delta, metrics = metrics,
                              control = sample_size_settings)
 from_sus
+plot(from_sus)
+
+# How much less the metrics vary in SUs than in single tiles
+plot(metric_cv(one_stratum, metrics), metric_cv(sus, metrics))
 
 worst <- which.max(from_sus$cv)
 cv_estimate <- from_sus$cv[worst]

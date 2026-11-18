@@ -256,6 +256,10 @@ print.su_curve <- function(x, ...) {
 #' (95% by default). A panel on the right lists the settings used, and the
 #' data citation is shown along the bottom.
 #'
+#' With `compare = TRUE` all the metrics are drawn in one panel instead, each
+#' as a percentage of its value at the last step. This shows which metrics
+#' settle quickly and which need more tiles.
+#'
 #' The sample unit size can be shown as seabed area, number of individuals or
 #' number of tiles (images). Give one to use along the bottom, or two to add
 #' the second along the top. The top axis is matched to the bottom one using
@@ -265,10 +269,12 @@ print.su_curve <- function(x, ...) {
 #' @param metrics Metrics to plot. Defaults to all of them.
 #' @param x_axis Size measures for the bottom axis and, optionally, the top
 #'   axis: `"area"`, `"individuals"` or `"tiles"`.
+#' @param compare Draw all the metrics in one panel, each as a percentage of
+#'   its value at the last step, to compare how quickly they settle.
 #' @param main Plot title.
 #' @param settings_panel Show the run settings panel on the right.
 #' @param ... Other graphical arguments passed on to [graphics::lines()] for
-#'   the median line, such as `lwd`.
+#'   the median lines, such as `lwd`.
 #'
 #' @return `x`, invisibly.
 #'
@@ -283,10 +289,14 @@ print.su_curve <- function(x, ...) {
 #'
 #' # Number of tiles along the bottom and seabed area along the top
 #' plot(curves, x_axis = c("tiles", "area"))
+#'
+#' # Which metric settles first?
+#' plot(curves, compare = TRUE, x_axis = "tiles")
 #' @export
 plot.su_curve <- function(x, metrics = NULL,
-                          x_axis = c("area", "individuals"),
-                          main = "Sample unit size curves",
+                          x_axis = c("area", "individuals"), compare = FALSE,
+                          main = if (compare) "Comparing metrics" else
+                            "Sample unit size curves",
                           settings_panel = TRUE, ...) {
   s <- attr(x, "settings")
   sizes <- c("area", "individuals", "tiles")
@@ -302,11 +312,20 @@ plot.su_curve <- function(x, metrics = NULL,
          call. = FALSE)
   }
 
-  panels <- lapply(metrics, function(name) {
+  curves <- lapply(metrics, function(name) {
     df <- as.data.frame(unclass(x[x$metric == name, ]))
     list(label = metric_label(name), size = df[sizes], median = df$median,
          lower = df$lower, upper = df$upper)
   })
+  key <- NULL
+  if (compare) {
+    colours <- grDevices::hcl.colors(max(length(metrics), 2),
+                                     "Dark 3")[seq_along(metrics)]
+    panels <- list(list(curves = curves, colours = colours))
+    key <- list(labels = metrics, colours = colours, type = "line")
+  } else {
+    panels <- curves
+  }
 
   items <- NULL
   if (settings_panel) {
@@ -316,81 +335,29 @@ plot.su_curve <- function(x, metrics = NULL,
       "Random orders" = s$times,
       "Replacement" = if (s$replace) "yes" else "no",
       "Tiles drawn" = paste("up to", s$max_tiles),
-      "Line" = "median",
-      "Band" = paste0("middle ", 100 * s$band, "% of orders")
+      "Line" = if (compare) "median, as % of its value at the last step" else
+        "median"
     )
+    if (!compare) {
+      items <- c(items,
+                 "Band" = paste0("middle ", 100 * s$band, "% of orders"))
+    }
   }
-  footer <- paste("Data:", attr(x, "data_citation"))
   line_args <- list(...)
+  draw_panel <- if (compare) {
+    function(p, bottom, top) {
+      draw_compare_panel(p, x_axis, line_args, bottom, top)
+    }
+  } else {
+    function(p, bottom, top) {
+      draw_su_curve_panel(p, x_axis, line_args, bottom, top)
+    }
+  }
 
-  old <- graphics::par(no.readonly = TRUE)
-  on.exit({
-    graphics::layout(1)
-    graphics::par(old)
-  })
-
-  # Drawn inside recordGraphics() so plot viewers redraw it correctly at a
-  # new size (see plot.sample_size_table())
-  grDevices::recordGraphics(
-    draw_su_curve_plot(panels = panels, x_axis = x_axis, main = main,
-                       items = items, footer = footer,
-                       line_args = line_args),
-    list(panels = panels, x_axis = x_axis, main = main, items = items,
-         footer = footer, line_args = line_args),
-    getNamespace("ST4")
-  )
+  plot_figure(panels, draw_panel, main = main, items = items,
+              footer = paste("Data:", attr(x, "data_citation")), key = key,
+              top_axis = length(x_axis) == 2)
   invisible(x)
-}
-
-# Panels are stacked in one or two columns and share the same x axis, so the
-# bottom axis is drawn only under the lowest panel of each column and the top
-# axis only over the highest. The title and top axis sit in a strip above the
-# panels and the bottom axis in a strip below. The settings panel runs the
-# full height, as on the heatmap.
-draw_su_curve_plot <- function(panels, x_axis, main, items, footer,
-                               line_args) {
-  k <- length(panels)
-  two_axes <- length(x_axis) == 2
-  n_col <- if (k <= 3) 1 else 2
-  n_row <- ceiling(k / n_col)
-  cells <- matrix(seq_len(n_row * n_col), n_row, n_col, byrow = TRUE)
-  cells[cells > k] <- 0
-  cells <- rbind(0, cells, 0)
-  widths <- rep(4 / n_col, n_col)
-  if (!is.null(items)) {
-    cells <- cbind(cells, k + 1)
-    widths <- c(widths, 1.3)
-  }
-
-  # Strip heights in inches, from the height of a line of text at the scale
-  # scale_to_window() will set
-  graphics::par(oma = c(1.3, 0, 0, 0))
-  line_in <- window_scale() * graphics::par("cin")[2]
-  strip <- su_curve_strips(two_axes) * line_in
-  inner <- graphics::par("din")[2] - 1.3 * line_in
-  # Panels keep at least a third of the height in very small windows
-  panel_h <- max(inner - sum(strip), inner / 3) / n_row
-  heights <- c(strip[1], rep(panel_h, n_row), strip[2])
-  graphics::layout(cells, widths = widths, heights = heights)
-  scale_to_window()
-  graphics::par(mar = c(0.5, 4.5, 0.5, 1))
-
-  for (i in seq_len(k)) {
-    pos <- which(cells == i, arr.ind = TRUE)
-    below <- cells[pos[1] + 1, pos[2]]
-    draw_su_curve_panel(panels[[i]], x_axis, line_args,
-                        bottom = below == 0, top = two_axes && pos[1] == 2)
-  }
-  su_curve_boxes(main, two_axes, sum(widths[seq_len(n_col)]) / sum(widths))
-  plot_footer(footer)
-  if (!is.null(items)) draw_settings_panel(items)
-  invisible()
-}
-
-# Heights of the strips above and below the panels, in lines of text: title
-# (and top axis), and bottom axis
-su_curve_strips <- function(two_axes) {
-  c(if (two_axes) 6 else 3, 3.6)
 }
 
 draw_su_curve_panel <- function(p, x_axis, line_args, bottom, top) {
@@ -400,9 +367,7 @@ draw_su_curve_panel <- function(p, x_axis, line_args, bottom, top) {
 
   graphics::plot.new()
   graphics::plot.window(xlim = range(0, xv), ylim = ylim)
-  usr <- graphics::par("usr")
-  graphics::rect(usr[1], usr[3], usr[2], usr[4], col = "white", border = NA)
-  graphics::abline(h = pretty(ylim, 3), col = "grey92")
+  panel_background(h = pretty(ylim, 3))
 
   ok <- is.finite(p$lower) & is.finite(p$upper)
   graphics::polygon(c(xv[ok], rev(xv[ok])), c(p$lower[ok], rev(p$upper[ok])),
@@ -413,8 +378,39 @@ draw_su_curve_panel <- function(p, x_axis, line_args, bottom, top) {
   graphics::axis(2, at = pretty(ylim, 3), las = 1)
   graphics::box(col = "grey60")
   graphics::title(ylab = p$label, line = 3)
+  draw_size_axes(p$size, x_axis, bottom, top)
+}
 
-  # The axes are drawn into the strips above and below, so need xpd = NA
+# All the metrics in one panel, each as a % of its median at the last step
+draw_compare_panel <- function(p, x_axis, line_args, bottom, top) {
+  size <- p$curves[[1]]$size
+  xv <- size[[x_axis[1]]]
+  pct <- lapply(p$curves, function(curve) {
+    last <- curve$median[length(curve$median)]
+    if (is.finite(last) && last != 0) 100 * curve$median / last else
+      rep(NA_real_, length(curve$median))
+  })
+  all_pct <- unlist(pct)
+  ylim <- range(0, 100, all_pct[is.finite(all_pct)])
+
+  graphics::plot.new()
+  graphics::plot.window(xlim = range(0, xv), ylim = ylim)
+  panel_background(h = pretty(ylim, 4))
+  graphics::abline(h = 100, col = "grey60", lty = 2)
+  for (i in seq_along(pct)) {
+    do.call(graphics::lines, c(list(xv, pct[[i]], col = p$colours[i],
+                                    lwd = 2), line_args))
+  }
+  graphics::axis(2, at = pretty(ylim, 4), las = 1)
+  graphics::box(col = "grey60")
+  graphics::title(ylab = "% of value at last step", line = 3)
+  draw_size_axes(size, x_axis, bottom, top)
+}
+
+# The size axes below and above a curve panel. They are drawn into the
+# strips around the panels, so need xpd = NA. The top axis is placed using
+# the median curves.
+draw_size_axes <- function(size, x_axis, bottom, top) {
   old <- graphics::par(xpd = NA)
   on.exit(graphics::par(old))
   if (bottom) {
@@ -422,46 +418,16 @@ draw_su_curve_panel <- function(p, x_axis, line_args, bottom, top) {
     graphics::mtext(size_label(x_axis[1]), side = 1, line = 2.2,
                     cex = graphics::par("cex"))
   }
-  # Second size measure along the top, placed using the median curves
   if (top) {
-    top_size <- p$size[[x_axis[2]]]
+    top_size <- size[[x_axis[2]]]
     ticks <- pretty(range(top_size))
-    at <- suppressWarnings(stats::approx(top_size, xv, xout = ticks,
-                                         ties = mean)$y)
+    at <- suppressWarnings(stats::approx(top_size, size[[x_axis[1]]],
+                                         xout = ticks, ties = mean)$y)
     keep <- !is.na(at)
     graphics::axis(3, at = at[keep], labels = ticks[keep])
     graphics::mtext(size_label(x_axis[2]), side = 3, line = 2.2,
                     cex = graphics::par("cex"))
   }
-}
-
-# Draws the title in a rounded box at the top, and a rounded box around the
-# panels and their axes. Positions are worked out in device units (ndc), then
-# drawn from the current panel with xpd = NA. `right` is where the panel
-# columns end, as a share of the width.
-su_curve_boxes <- function(main, two_axes, right) {
-  line <- graphics::par("csi") / graphics::par("din")[2] # in ndc
-  strip <- su_curve_strips(two_axes)
-  left <- 0.006
-  right <- right - 0.006
-  title_top <- 1 - 0.1 * line
-  title_bottom <- 1 - 2.5 * line
-  panels_top <- 1 - (strip[1] - 0.2) * line
-  if (two_axes) panels_top <- title_bottom - 0.4 * line
-  panels_bottom <- 1.4 * line
-
-  old <- graphics::par(xpd = NA)
-  on.exit(graphics::par(old))
-  ux <- function(x) graphics::grconvertX(x, "ndc", "user")
-  uy <- function(y) graphics::grconvertY(y, "ndc", "user")
-  r <- 0.6 * line * graphics::par("din")[2] / graphics::par("din")[1] *
-    diff(ux(c(0, 1)))
-  rounded_rect(ux(left), uy(panels_bottom), ux(right), uy(panels_top),
-               r = r, col = NA, border = "grey70")
-  rounded_rect(ux(left), uy(title_bottom), ux(right), uy(title_top),
-               r = r, col = "grey97", border = "grey70")
-  graphics::text(ux((left + right) / 2), uy((title_bottom + title_top) / 2),
-                 main, font = 2, cex = 1.2)
 }
 
 size_label <- function(size) {

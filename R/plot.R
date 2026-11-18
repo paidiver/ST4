@@ -91,7 +91,7 @@ plot.sample_size_table <- function(x, max_shown = NULL,
     highlight_text <- paste0(
       "CV ", highlight[["cv"]], "%, delta ", highlight[["delta"]], "%\n",
       if (is.na(n_needed)) paste0("> ", s$max_n) else n_needed, " SUs",
-      if (on_grid) "" else "\n(not on the grid)"
+      if (on_grid) "\nOutlined in orange" else "\n(not on the grid)"
     )
   }
 
@@ -125,15 +125,15 @@ plot.sample_size_table <- function(x, max_shown = NULL,
   dots <- list(...) # extra arguments for image()
 
   old <- graphics::par(no.readonly = TRUE)
-  on.exit({
-    graphics::layout(1)
-    graphics::par(old)
-  })
+  on.exit(graphics::par(old))
 
-  # Draw inside recordGraphics() so that when a plot viewer redraws the plot
-  # at a new size (as VS Code and RStudio do), the drawing code runs again.
-  # The boxes, text size and panel spacing depend on the window size, so
-  # replaying the old drawing commands would put them in the wrong place.
+  # Start the page outside recordGraphics(), so R clears the previous plot
+  # from its record (see figure_regions()). Then draw inside recordGraphics()
+  # so that when a plot viewer redraws the plot at a new size (as VS Code and
+  # RStudio do), the drawing code runs again. The boxes, text size and panel
+  # spacing depend on the window size, so replaying the old drawing commands
+  # would put them in the wrong place.
+  graphics::plot.new()
   grDevices::recordGraphics(
     draw_sample_size_plot(
       z = z, cv = cv, delta = delta, greyed = greyed, colours = colours,
@@ -161,14 +161,11 @@ draw_sample_size_plot <- function(z, cv, delta, greyed, colours, lo, hi,
                                   highlighted, image_args) {
   # Outer margin at the bottom for the footer
   graphics::par(oma = c(1.3, 0, 0, 0))
-  if (!is.null(items)) {
-    graphics::layout(matrix(1:2, nrow = 1), widths = c(4, 1.3))
-  } else {
-    graphics::layout(1)
-  }
+  regions <- figure_regions(matrix(1:2, nrow = 1), c(4, 1.3), 1)
   scale_to_window()
   graphics::par(mar = c(1.6, 4.5, 6.5, 1))
 
+  use_region(if (is.null(items)) c(0, 1, 0, 1) else regions[[1]])
   graphics::plot.new()
   graphics::plot.window(xlim = c(0.5, length(delta) + 0.5),
                         ylim = c(0.5, length(cv) + 0.5), xaxs = "i", yaxs = "i")
@@ -225,6 +222,7 @@ draw_sample_size_plot <- function(z, cv, delta, greyed, colours, lo, hi,
                     "Rohlf (1995), for assumed CVs. No survey data used."))
 
   if (!is.null(items)) {
+    use_region(regions[[2]])
     draw_settings_panel(items,
                         highlight = if (highlighted) "Highlighted",
                         key = key)
@@ -238,8 +236,10 @@ highlight_colour <- "#E8590C"
 # Draws a boxed list of run settings filling the current plot region, like a
 # legend. `items` is a named vector: names are labels, values are settings.
 # Items named in `highlight` get their label in the highlight colour.
-# `key`, if given, is a list with `colours`, `low` and `high` (and optionally
-# `grey`, the label for greyed-out cells), drawn as a colour bar at the bottom.
+# `key`, if given, is drawn at the bottom. It is either a list with
+# `colours`, `low` and `high` (and optionally `grey`, the label for greyed-out
+# cells), drawn as a colour bar, or a list with `labels`, `colours` and `type`
+# drawn as a key of lines or boxes (see draw_entry_key()).
 draw_settings_panel <- function(items, title = "Run settings",
                                 highlight = NULL, key = NULL) {
   # Small top margin so the panel runs from the top of the title down to the
@@ -265,8 +265,7 @@ draw_settings_panel <- function(items, title = "Run settings",
   # one line of text in panel units (the panel runs from 0 to 1).
   text_line <- graphics::par("csi") / graphics::par("pin")[2]
   # Room at the bottom for the colour key
-  key_h <- text_line *
-    (if (is.null(key)) 0 else if (is.null(key$grey)) 3.9 else 5.4)
+  key_h <- text_line * key_lines(key)
   line_h <- min(1.3 * text_line, (0.99 - key_h) / height_in_lines)
   top <- 1
   rounded_rect(0.01, 0.002, 0.99, top - 0.002, col = "grey97",
@@ -288,7 +287,11 @@ draw_settings_panel <- function(items, title = "Run settings",
     y <- y - line_h * 1.15
   }
 
-  if (!is.null(key)) draw_colour_key(key, text_line)
+  if (!is.null(key$labels)) {
+    draw_entry_key(key, text_line)
+  } else if (!is.null(key)) {
+    draw_colour_key(key, text_line)
+  }
   invisible()
 }
 
