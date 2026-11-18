@@ -1,8 +1,11 @@
 # ST4 demo script
 #
-# Shows how to use the package, step by step. Edit the settings below and run
-# the whole script. Then look at the results, change the settings and run it
-# again.
+# Shows how to use the package, step by step, the way a survey is usually
+# planned: start from a guess, then replace it with better estimates as the
+# data comes in. The estimates are tracked in a table as you go.
+#
+# Edit the settings below and run the whole script. Then look at the results,
+# change the settings and run it again.
 #
 # To get your own copy of this script to edit:
 #   file.copy(system.file("scripts", "demo.R", package = "ST4"), "demo.R")
@@ -31,7 +34,8 @@ metrics <- c("richness", "density", "shannon")
 
 # For the number of sample units: your best guess at the coefficient of
 # variation (CV, %) of the metric, and the smallest difference between
-# strata you want to be able to detect (delta, % of the mean)
+# strata you want to be able to detect (delta, % of the mean). The guess is
+# only a starting point. It is replaced by CVs from the data in steps 4 and 6.
 guessed_cv <- 25
 delta      <- 40
 
@@ -47,13 +51,18 @@ table_delta <- c(20, 30, 40, 80, 100)
 # on its own to see them all.
 sample_size_settings <- sample_size_control()
 
-# Settings for building composite sample units (SUs) from tiles. By default
-# each SU is about 150 m² of seabed. Use type = "individuals" for SUs of a set
-# number of individuals, or type = "tiles" for a set number of tiles. Run
-# sample_unit_control() on its own to see them all.
-sample_unit_settings <- sample_unit_control()
+# How to build composite sample units (SUs) from tiles: "area" (m² of
+# seabed), "individuals" or "tiles". The SU size itself is chosen in step 5,
+# after looking at the curves.
+su_type <- "area"
 
-# Seed for the random grouping of tiles. The same seed gives the same SUs.
+# Settings for the sample unit size curves. By default tiles are drawn in
+# 1000 random orders, with replacement. Run su_curve_control() on its own to
+# see them all.
+su_curve_settings <- su_curve_control()
+
+# Seed for the random steps (curves and grouping tiles into SUs). The same
+# seed gives the same results.
 seed <- 1
 
 
@@ -84,8 +93,15 @@ summary(tile_metrics[metrics])
 
 # ---- 4. Number of sample units needed ----------------------------------------
 
-# Sample units needed per stratum for the guessed CV and delta
-sample_size(cv = guessed_cv, delta = delta, control = sample_size_settings)
+# Start from the guess. cv_estimate and n_needed are updated as better
+# estimates come in, and each one is added to the estimates table.
+cv_estimate <- guessed_cv
+n_needed <- sample_size(cv = cv_estimate, delta = delta,
+                        control = sample_size_settings)
+n_needed
+
+estimates <- data.frame(stage = "Guess", units = "not known yet",
+                        metric = "any", cv = cv_estimate, n_needed = n_needed)
 
 # The same for the range of CVs and deltas set above
 needed <- sample_size_table(cv = table_cv, delta = table_delta,
@@ -97,33 +113,90 @@ needed
 # right lists the settings used.
 plot(needed, max_shown = 10, highlight = c(cv = guessed_cv, delta = delta))
 
-# Instead of guessing the CV, work it out from the data for each metric.
+# Now replace the guess with CVs worked out from the data for each metric.
 # Different metrics vary by different amounts, so the survey should be
 # designed for the one that needs the most sample units (the worst case).
-# These are single tiles, so the CVs are high. Composite sample units made of
-# many tiles will vary less and need fewer.
-metric_cv(one_stratum, metrics)
-sample_size_data(one_stratum, delta = delta, metrics = metrics,
-                 control = sample_size_settings)
+from_tiles <- sample_size_data(one_stratum, delta = delta, metrics = metrics,
+                               control = sample_size_settings)
+from_tiles
+
+worst <- which.max(from_tiles$cv)
+cv_estimate <- from_tiles$cv[worst]
+n_needed <- from_tiles[[paste0("n_delta_", delta)]][worst]
+estimates <- rbind(estimates, data.frame(
+  stage = "Single tiles", units = "1 tile", metric = from_tiles$metric[worst],
+  cv = cv_estimate, n_needed = n_needed
+))
+estimates
+
+# Single tiles vary a lot, so they need many sample units. Pooling tiles
+# into bigger SUs smooths this out. Steps 5 and 6 find a good SU size.
 
 
-# ---- 5. Composite sample units -----------------------------------------------
+# ---- 5. Sample unit size curves ----------------------------------------------
 
-# Groups the tiles into SUs at random. Leftover tiles that do not fill an SU
-# are dropped.
-sus <- build_sample_units(one_stratum, control = sample_unit_settings,
+# How each metric changes as more tiles are pooled into one SU. Where a curve
+# flattens out, adding more tiles to an SU changes the metric little, which
+# helps choose the SU size for step 6.
+curves <- su_curve(one_stratum, metrics, control = su_curve_settings,
+                   seed = seed)
+curves
+
+# One panel per metric. The line is the median over the random orders and the
+# band holds the middle 95% of them. Seabed area is along the bottom and
+# individuals along the top. Try x_axis = c("tiles", "area") to show the
+# number of tiles (images) instead.
+plot(curves)
+
+# Decision: read the SU size off the curves, in the units of su_type. Here
+# the curves have mostly flattened out and the bands narrowed by about
+# 150 m². Change this and run the steps below again to compare sizes.
+su_size <- 150
+
+
+# ---- 6. Composite sample units -----------------------------------------------
+
+# Groups the tiles into SUs of the chosen size at random. Leftover tiles that
+# do not fill an SU are dropped.
+sus <- build_sample_units(one_stratum, type = su_type, size = su_size,
                           seed = seed)
 sus
 
 # The tiles in each SU
 head(sus$members)
 
-# SUs vary much less than single tiles, so they need fewer sample units
-metric_cv(sus, metrics)
-sample_size_data(sus, delta = delta, metrics = metrics,
-                 control = sample_size_settings)
+# Update the estimates with the CVs of the SUs
+from_sus <- sample_size_data(sus, delta = delta, metrics = metrics,
+                             control = sample_size_settings)
+from_sus
+
+worst <- which.max(from_sus$cv)
+cv_estimate <- from_sus$cv[worst]
+n_needed <- from_sus[[paste0("n_delta_", delta)]][worst]
+estimates <- rbind(estimates, data.frame(
+  stage = "Composite SUs",
+  units = paste(su_size, c(area = "m²", individuals = "individuals",
+                           tiles = "tiles")[[su_type]]),
+  metric = from_sus$metric[worst], cv = cv_estimate, n_needed = n_needed
+))
+
+
+# ---- 7. Survey plan ----------------------------------------------------------
+
+# How the estimates changed from the first guess to the SUs
+estimates$cv <- round(estimates$cv, 1)
+estimates
+
+# What the final estimate means for the survey, per stratum. Most of the time
+# what matters is how many images to take, as that sets the ship time.
+tiles_per_su <- mean(sus$meta$n_tiles)
+area_per_su  <- mean(sus$meta[[sus$settings$area]])
+cat(n_needed, " SUs per stratum, each about ", round(tiles_per_su),
+    " images (", round(area_per_su), " m²).\n",
+    "That is about ", ceiling(n_needed * tiles_per_su), " images and ",
+    round(n_needed * area_per_su), " m² of seabed per stratum.\n", sep = "")
 
 
 # ---- Coming later ------------------------------------------------------------
 # These steps will be added as the package grows:
-#   - sample unit size curves and their diagnostics
+#   - diagnostics for where the curves flatten out
