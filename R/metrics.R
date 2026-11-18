@@ -33,8 +33,10 @@
 #' @param ... Passed on to [vegan::diversity()], for example `base = 2` for
 #'   Shannon in bits instead of the natural log.
 #'
-#' @return A data frame with one row per tile or sample unit. The first column
-#'   holds the ids and the others hold one metric each.
+#' @return A `su_metrics` object: a data frame with one row per tile or
+#'   sample unit. The first column holds the ids and the others hold one
+#'   metric each. Use [plot()][plot.su_metrics()] to see how each metric is
+#'   spread across the units.
 #'
 #' @examples
 #' counts_file <- system.file("extdata", "synthetic_counts.csv", package = "ST4")
@@ -84,7 +86,10 @@ su_metrics <- function(x, metrics = "richness", ...) {
   out <- data.frame(id = rownames(comm), values, check.names = FALSE)
   names(out)[1] <- x$settings$id
   rownames(out) <- NULL
-  out
+  structure(out, data = describe_data(x), stratum = describe_stratum(x),
+            unit = x$settings$unit,
+            data_citation = x$settings$data_citation,
+            class = c("su_metrics", "data.frame"))
 }
 
 builtin_metric <- function(name, comm, area, ...) {

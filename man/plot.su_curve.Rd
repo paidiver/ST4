@@ -8,7 +8,8 @@
   x,
   metrics = NULL,
   x_axis = c("area", "individuals"),
-  main = "Sample unit size curves",
+  compare = FALSE,
+  main = if (compare) "Comparing metrics" else "Sample unit size curves",
   settings_panel = TRUE,
   ...
 )
@@ -21,12 +22,15 @@
 \item{x_axis}{Size measures for the bottom axis and, optionally, the top
 axis: \code{"area"}, \code{"individuals"} or \code{"tiles"}.}
 
+\item{compare}{Draw all the metrics in one panel, each as a percentage of
+its value at the last step, to compare how quickly they settle.}
+
 \item{main}{Plot title.}
 
 \item{settings_panel}{Show the run settings panel on the right.}
 
 \item{...}{Other graphical arguments passed on to \code{\link[graphics:lines]{graphics::lines()}} for
-the median line, such as \code{lwd}.}
+the median lines, such as \code{lwd}.}
 }
 \value{
 \code{x}, invisibly.
@@ -38,6 +42,10 @@ the random orders of tiles and the shaded band holds the middle of them
 data citation is shown along the bottom.
 }
 \details{
+With \code{compare = TRUE} all the metrics are drawn in one panel instead, each
+as a percentage of its value at the last step. This shows which metrics
+settle quickly and which need more tiles.
+
 The sample unit size can be shown as seabed area, number of individuals or
 number of tiles (images). Give one to use along the bottom, or two to add
 the second along the top. The top axis is matched to the bottom one using
@@ -54,4 +62,7 @@ plot(curves)
 
 # Number of tiles along the bottom and seabed area along the top
 plot(curves, x_axis = c("tiles", "area"))
+
+# Which metric settles first?
+plot(curves, compare = TRUE, x_axis = "tiles")
 }
