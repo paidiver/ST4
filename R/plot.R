@@ -411,10 +411,13 @@ plot_footer <- function(text) {
 # copy. The plot is laid out for 9 by 5.75 inches. The scale is kept between
 # 0.75 and 1.6 so text stays readable.
 scale_to_window <- function() {
-  din <- graphics::par("din")
-  scale <- min(din[1] / 9, din[2] / 5.75)
-  scale <- min(max(scale, 0.75), 1.6)
   # Margin lines are measured in lines of text, so changing cex scales the
   # margins too. Setting mex as well would scale them twice.
-  graphics::par(cex = scale)
+  graphics::par(cex = window_scale())
+}
+
+window_scale <- function() {
+  din <- graphics::par("din")
+  scale <- min(din[1] / 9, din[2] / 5.75)
+  min(max(scale, 0.75), 1.6)
 }
