@@ -33,8 +33,12 @@ test_that("richness is the default", {
 })
 
 test_that("gives the right answers on known data", {
-  out <- su_metrics(metrics_data(), c("abundance", "density", "shannon",
-                                      "simpson", "invsimpson", "pielou"))
+  # t2 has no individuals, so there is a warning
+  expect_warning(
+    out <- su_metrics(metrics_data(), c("abundance", "density", "shannon",
+                                        "simpson", "invsimpson", "pielou")),
+    "1 of 4 tiles have no individuals"
+  )
   # Abundance is the row total: t1 3 + 1 = 4, t2 0, t3 1 + 1 + 1 + 1 = 4, t4 5
   expect_equal(out$abundance, c(4, 0, 4, 5))
   # Density is abundance / area: 4 / 2 = 2, 0 / 5 = 0, 4 / 8 = 0.5, 5 / 10 = 0.5
@@ -62,31 +66,44 @@ test_that("gives the right answers on known data", {
 
 test_that("matches calling vegan directly", {
   x <- metrics_data()
-  keep <- rowSums(x$comm) > 0
-  out <- su_metrics(x, c("richness", "shannon", "simpson", "invsimpson"))
+  out <- suppressWarnings(
+    su_metrics(x, c("richness", "shannon", "simpson", "invsimpson"))
+  )
 
   expect_equal(out$richness, unname(vegan::specnumber(x$comm)))
   for (index in c("shannon", "simpson", "invsimpson")) {
-    expect_equal(out[[index]][keep],
-                 unname(vegan::diversity(x$comm, index)[keep]))
+    expect_equal(out[[index]], unname(vegan::diversity(x$comm, index)))
   }
 })
 
-test_that("diversity indices are NA where they are not defined", {
-  out <- su_metrics(metrics_data(), c("shannon", "simpson", "invsimpson",
-                                      "pielou"))
-  # t2 is empty, so every p_i = 0 / 0 and none of the indices can be
-  # calculated
-  expect_true(all(is.na(unlist(out[2, -1]))))
+test_that("returns vegan's values for empty units, with a warning", {
+  expect_warning(
+    out <- su_metrics(metrics_data(), c("shannon", "simpson", "invsimpson",
+                                        "pielou")),
+    "1 of 4 tiles have no individuals"
+  )
+  # t2 is empty. vegan sums over no taxa, so H' = 0 and D = 0, giving
+  #   Shannon 0, Simpson 1 - 0 = 1 and inverse Simpson 1 / 0 = Inf
+  #   Pielou = H' / ln(richness) = 0 / ln 0 = 0 / -Inf = 0
+  expect_equal(out$shannon[2], 0)
+  expect_equal(out$simpson[2], 1)
+  expect_equal(out$invsimpson[2], Inf)
+  expect_equal(out$pielou[2], 0)
   # t4 has one taxon, so p_a = 5/5 = 1
   #   H' = -(1 * ln 1) = 0
-  #   J' = H' / ln(richness) = 0 / ln 1 = 0 / 0, which is not defined
+  #   J' = H' / ln(richness) = 0 / ln 1 = 0 / 0 = NaN
   expect_equal(out$shannon[4], 0)
-  expect_true(is.na(out$pielou[4]))
+  expect_true(is.nan(out$pielou[4]))
+})
+
+test_that("no warning when empty units only affect other metrics", {
+  # Richness, abundance and density are fine on an empty tile: 0, 0 and 0
+  expect_no_warning(su_metrics(metrics_data(),
+                               c("richness", "abundance", "density")))
 })
 
 test_that("passes extra settings on to vegan", {
-  out <- su_metrics(metrics_data(), "shannon", base = 2)
+  out <- suppressWarnings(su_metrics(metrics_data(), "shannon", base = 2))
   # t3 with log base 2: H' = -4 * (1/4 * log2(1/4)) = log2 4 = 2
   expect_equal(out$shannon[3], 2)
 })

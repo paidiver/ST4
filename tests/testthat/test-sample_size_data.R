@@ -37,10 +37,18 @@ test_that("metric_cv gives the right answer on known data", {
   expect_equal(out$cv, 100 * sqrt(8.75 / 3) / 1.75)
 })
 
-test_that("metric_cv leaves out units where a metric is NA", {
-  out <- metric_cv(cv_data(), c("richness", "shannon"))
-  # Shannon is NA for the empty tile t2, so only 3 tiles are used
-  expect_equal(out$n_units, c(4, 3))
+test_that("metric_cv leaves out units where a metric is not finite", {
+  out <- suppressWarnings(
+    metric_cv(cv_data(), c("richness", "shannon", "invsimpson"))
+  )
+  # The empty tile t2 has Shannon 0, which is kept, so 4 tiles are used.
+  # Its inverse Simpson is 1 / 0 = Inf, so only 3 tiles are used for that.
+  expect_equal(out$n_units, c(4, 4, 3))
+  expect_true(is.finite(out$cv[3]))
+  expect_output(print(out), "left out for that metric")
+  # Richness uses all 4 tiles, so there is no note
+  printed <- utils::capture.output(print(metric_cv(cv_data())))
+  expect_false(any(grepl("left out", printed)))
 })
 
 test_that("metric_cv gives NA where the CV cannot be calculated", {

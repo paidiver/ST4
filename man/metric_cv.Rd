@@ -28,9 +28,12 @@ of each metric across the units. The CV is what \code{\link[=sample_size]{sample
 }
 \details{
 CV (\%) = 100 * standard deviation / mean, using the sample standard
-deviation (\code{\link[stats:sd]{stats::sd()}}). Units where a metric is \code{NA}, such as Shannon on
-a tile with no individuals, are left out for that metric. The CV is \code{NA}
-when the mean is 0 or fewer than 2 units are left.
+deviation (\code{\link[stats:sd]{stats::sd()}}). Units where a metric is \code{NA}, \code{NaN} or \code{Inf}
+are left out for that metric, as no mean or CV can be worked out with
+them. For example inverse Simpson is \code{Inf} for a tile with no individuals.
+The \code{n_units} column shows how many units were used for each metric, and
+the printout says when any were left out. The CV is \code{NA} when the mean is
+0 or fewer than 2 units are left.
 
 The CV depends on the size of the units: it is usually much higher for
 single tiles than for composite sample units made of many tiles.
