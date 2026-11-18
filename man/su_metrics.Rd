@@ -41,9 +41,12 @@ Any other metric can be given as a named function that takes the counts
 matrix (rows are units, columns are taxa) and returns one value per row.
 For example \code{list(fisher = vegan::fisher.alpha)}.
 
-Shannon, Simpson, inverse Simpson and Pielou are \code{NA} for units with no
-individuals, as they are not defined there. Pielou is also \code{NA} for units
-with only one taxon.
+The values are returned as vegan gives them, with nothing changed. For a
+unit with no individuals vegan gives Shannon 0, Simpson 1 and inverse
+Simpson \code{Inf}, and Pielou is 0. A warning says how many units have no
+individuals. Pielou is \code{NaN} for a unit with only one taxon, as it is
+0 / ln(1) = 0 / 0. Transform or filter the data first if these values are
+not wanted.
 }
 \examples{
 counts_file <- system.file("extdata", "synthetic_counts.csv", package = "ST4")

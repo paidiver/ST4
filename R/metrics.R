@@ -20,9 +20,12 @@
 #' matrix (rows are units, columns are taxa) and returns one value per row.
 #' For example `list(fisher = vegan::fisher.alpha)`.
 #'
-#' Shannon, Simpson, inverse Simpson and Pielou are `NA` for units with no
-#' individuals, as they are not defined there. Pielou is also `NA` for units
-#' with only one taxon.
+#' The values are returned as vegan gives them, with nothing changed. For a
+#' unit with no individuals vegan gives Shannon 0, Simpson 1 and inverse
+#' Simpson `Inf`, and Pielou is 0. A warning says how many units have no
+#' individuals. Pielou is `NaN` for a unit with only one taxon, as it is
+#' 0 / ln(1) = 0 / 0. Transform or filter the data first if these values are
+#' not wanted.
 #'
 #' @param x An `su_data` object from [read_counts()] or [select_stratum()].
 #' @param metrics Names of the metrics to calculate (see the table above),
@@ -57,6 +60,12 @@ su_metrics <- function(x, metrics = "richness", ...) {
   comm <- x$comm
   area <- x$meta[[x$settings$area]]
   empty <- rowSums(comm) == 0
+  if (any(empty) && any(unlist(metrics) %in% diversity_metrics)) {
+    warning(sum(empty), " of ", length(empty), " ", x$settings$unit,
+            " have no individuals. Diversity indices for these are as vegan ",
+            "gives them (Shannon 0, Simpson 1, inverse Simpson Inf).",
+            call. = FALSE)
+  }
 
   values <- lapply(names(metrics), function(name) {
     m <- metrics[[name]]
@@ -68,7 +77,7 @@ su_metrics <- function(x, metrics = "richness", ...) {
       }
       return(unname(out))
     }
-    unname(builtin_metric(m, comm, area, empty, ...))
+    unname(builtin_metric(m, comm, area, ...))
   })
   names(values) <- names(metrics)
 
@@ -78,29 +87,22 @@ su_metrics <- function(x, metrics = "richness", ...) {
   out
 }
 
-builtin_metric <- function(name, comm, area, empty, ...) {
+builtin_metric <- function(name, comm, area, ...) {
   switch(name,
     richness = vegan::specnumber(comm),
     abundance = rowSums(comm),
     density = rowSums(comm) / area,
     shannon = ,
     simpson = ,
-    invsimpson = {
-      out <- vegan::diversity(comm, index = name, ...)
-      out[empty] <- NA
-      out
-    },
-    pielou = {
-      out <- vegan::diversity(comm, index = "shannon", ...) /
-        log(vegan::specnumber(comm))
-      out[empty | vegan::specnumber(comm) < 2] <- NA
-      out
-    }
+    invsimpson = vegan::diversity(comm, index = name, ...),
+    pielou = vegan::diversity(comm, index = "shannon", ...) /
+      log(vegan::specnumber(comm))
   )
 }
 
 builtin_metrics <- c("richness", "abundance", "density", "shannon", "simpson",
                      "invsimpson", "pielou")
+diversity_metrics <- c("shannon", "simpson", "invsimpson", "pielou")
 
 # Turns the metrics argument into a named list of names and functions
 as_metric_list <- function(metrics) {
@@ -153,9 +155,12 @@ as_metric_list <- function(metrics) {
 #' of each metric across the units. The CV is what [sample_size()] needs.
 #'
 #' CV (%) = 100 * standard deviation / mean, using the sample standard
-#' deviation ([stats::sd()]). Units where a metric is `NA`, such as Shannon on
-#' a tile with no individuals, are left out for that metric. The CV is `NA`
-#' when the mean is 0 or fewer than 2 units are left.
+#' deviation ([stats::sd()]). Units where a metric is `NA`, `NaN` or `Inf`
+#' are left out for that metric, as no mean or CV can be worked out with
+#' them. For example inverse Simpson is `Inf` for a tile with no individuals.
+#' The `n_units` column shows how many units were used for each metric, and
+#' the printout says when any were left out. The CV is `NA` when the mean is
+#' 0 or fewer than 2 units are left.
 #'
 #' The CV depends on the size of the units: it is usually much higher for
 #' single tiles than for composite sample units made of many tiles.
@@ -179,13 +184,14 @@ metric_cv <- function(x, metrics = "richness", ...) {
 
   rows <- lapply(names(values), function(name) {
     v <- values[[name]]
-    v <- v[!is.na(v)]
+    v <- v[is.finite(v)]
     m <- if (length(v) > 0) mean(v) else NA_real_
     s <- if (length(v) > 1) stats::sd(v) else NA_real_
     cv <- if (!is.na(m) && !is.na(s) && m != 0) 100 * s / m else NA_real_
     data.frame(metric = name, n_units = length(v), mean = m, sd = s, cv = cv)
   })
   structure(do.call(rbind, rows), data = describe_data(x),
+            n_total = nrow(x$comm),
             data_citation = x$settings$data_citation,
             class = c("metric_cv", "data.frame"))
 }
@@ -198,9 +204,19 @@ print.metric_cv <- function(x, ...) {
   df <- as.data.frame(unclass(x), stringsAsFactors = FALSE)
   attr(df, "data") <- NULL
   attr(df, "data_citation") <- NULL
+  attr(df, "n_total") <- NULL
   df$mean <- signif(df$mean, 4)
   df$sd <- signif(df$sd, 4)
   df$cv <- round(df$cv, 1)
   print(df, row.names = FALSE)
+  left_out_note(x)
   invisible(x)
+}
+
+# Says when some units were left out of a metric's CV
+left_out_note <- function(x) {
+  if (any(x$n_units < attr(x, "n_total"))) {
+    cat("Units where a metric is NA, NaN or Inf are left out for that",
+        "metric (see n_units).\n")
+  }
 }

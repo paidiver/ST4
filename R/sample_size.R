@@ -192,6 +192,7 @@ sample_size_data <- function(x, delta, metrics = "richness",
 
   structure(out, settings = ctl, delta = delta, data = attr(out, "data"),
             data_citation = attr(out, "data_citation"),
+            n_total = attr(out, "n_total"),
             class = c("sample_size_data", "data.frame"))
 }
 
@@ -210,6 +211,7 @@ print.sample_size_data <- function(x, ...) {
   attr(df, "delta") <- NULL
   attr(df, "data") <- NULL
   attr(df, "data_citation") <- NULL
+  attr(df, "n_total") <- NULL
   df$mean <- signif(df$mean, 4)
   df$sd <- signif(df$sd, 4)
   df$cv <- round(df$cv, 1)
@@ -219,6 +221,7 @@ print.sample_size_data <- function(x, ...) {
                         paste0(">", s$max_n), df[[col]])
   }
   print(df, row.names = FALSE, na.print = "NA")
+  left_out_note(x)
 
   # Worst case: the metric with the highest CV needs the most sample units
   if (any(!is.na(x$cv))) {
