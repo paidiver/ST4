@@ -88,7 +88,10 @@ one_stratum
 # Calculated by vegan. One row per image.
 image_metrics <- su_metrics(one_stratum, metrics)
 head(image_metrics)
-summary(image_metrics[metrics])
+
+# The values that matter for the survey: CV, zeros and the most variable
+# metric
+summary(image_metrics)
 
 # How each metric is spread across the images, with the mean marked
 plot(image_metrics)
@@ -172,6 +175,9 @@ sus
 
 # The images in each SU
 head(sus$members)
+
+# The same summary for the SUs. No zeros, and much lower CVs
+summary(su_metrics(sus, metrics))
 
 # Update the estimates with the CVs of the SUs
 from_sus <- sample_size_data(sus, delta = delta, metrics = metrics,
