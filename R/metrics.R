@@ -93,6 +93,105 @@ su_metrics <- function(x, metrics = "richness", ...) {
             class = c("su_metrics", "data.frame"))
 }
 
+#' Summarise metrics for survey design
+#'
+#' Summarises the metrics from [su_metrics()] with the values that matter
+#' for planning a survey, in place of the quartiles that [summary()] gives
+#' for a data frame.
+#'
+#' For each metric it gives:
+#' * `n_units`: units used. Units where the metric is `NA`, `NaN` or `Inf`
+#'   are left out, as in [metric_cv()]. A CV from a few units is rougher
+#'   than one from many.
+#' * `mean`, `sd` and `cv` (%): as in [metric_cv()]. The CV is what
+#'   [sample_size()] needs.
+#' * `zeros`: units where the metric is 0. Many zeros, such as images with
+#'   no individuals, mean the units are too small and the CV will be high.
+#' * `left_out`: units left out because the metric is `NA`, `NaN` or `Inf`.
+#'
+#' The printout names the most variable metric (highest CV). It needs the
+#' most SUs, so it sets the survey size if every metric is to be covered.
+#'
+#' @param object An `su_metrics` object from [su_metrics()]. A subset of its
+#'   columns also works, such as `m[c("richness", "density")]`.
+#' @param ... Not used.
+#'
+#' @return A `summary.su_metrics` object: a data frame with one row per
+#'   metric and the columns `metric`, `n_units`, `mean`, `sd`, `cv`, `zeros`
+#'   and `left_out`.
+#'
+#' @examples
+#' counts_file <- system.file("extdata", "synthetic_counts.csv", package = "ST4")
+#' metadata_file <- system.file("extdata", "synthetic_metadata.csv",
+#'                              package = "ST4")
+#' sand <- select_stratum(read_counts(counts_file, metadata_file), "sand")
+#' m <- su_metrics(sand, c("richness", "density"))
+#' summary(m)
+#'
+#' # The same for composite sample units
+#' summary(su_metrics(build_sample_units(sand, seed = 1),
+#'                    c("richness", "density")))
+#' @export
+summary.su_metrics <- function(object, ...) {
+  # Metric columns are the numeric ones. The id column is text.
+  values <- Filter(is.numeric, as.list(object))
+  if (length(values) == 0) {
+    stop("No metric columns to summarise.", call. = FALSE)
+  }
+  rows <- lapply(names(values), function(name) {
+    v <- values[[name]]
+    s <- cv_stats(v[is.finite(v)])
+    data.frame(metric = name, n_units = s$n, mean = s$mean, sd = s$sd,
+               cv = s$cv, zeros = sum(v == 0, na.rm = TRUE),
+               left_out = sum(!is.finite(v)))
+  })
+  structure(do.call(rbind, rows), data = attr(object, "data"),
+            data_citation = attr(object, "data_citation"),
+            class = c("summary.su_metrics", "data.frame"))
+}
+
+#' @export
+print.summary.su_metrics <- function(x, ...) {
+  cat("Summary of metrics for survey design\n")
+  if (!is.null(attr(x, "data"))) {
+    cat("Data: ", attr(x, "data"), "\n", sep = "")
+  }
+  if (!is.null(attr(x, "data_citation"))) {
+    cat("Data citation: ", attr(x, "data_citation"), "\n", sep = "")
+  }
+  cat("\n")
+  df <- as.data.frame(unclass(x), stringsAsFactors = FALSE)
+  attr(df, "data") <- NULL
+  attr(df, "data_citation") <- NULL
+  df$mean <- signif(df$mean, 4)
+  df$sd <- signif(df$sd, 4)
+  df$cv <- round(df$cv, 1)
+  print(df, row.names = FALSE)
+  cat("\n")
+  if (all(is.na(x$cv))) {
+    cat("No CV could be worked out.\n")
+  } else {
+    worst <- which.max(x$cv)
+    cat("Most variable: ", x$metric[worst], " (CV ", round(x$cv[worst], 1),
+        "%). It needs the most SUs.\n", sep = "")
+  }
+  if (any(x$left_out > 0)) {
+    cat("Units where a metric is NA, NaN or Inf are left out for that",
+        "metric (see left_out).\n")
+  }
+  invisible(x)
+}
+
+# Number of values, mean, standard deviation and CV (%) of `v`. The CV is NA
+# when the mean is 0 or there are fewer than 2 values. Shared by
+# metric_cv() and summary.su_metrics().
+cv_stats <- function(v) {
+  m <- if (length(v) > 0) mean(v) else NA_real_
+  s <- if (length(v) > 1) stats::sd(v) else NA_real_
+  cv <- if (!is.na(m) && !is.na(s) && m != 0) 100 * s / m else NA_real_
+  list(n = length(v), mean = m, sd = s, cv = cv)
+}
+
 builtin_metric <- function(name, comm, area, ...) {
   switch(name,
     richness = vegan::specnumber(comm),
@@ -190,11 +289,9 @@ metric_cv <- function(x, metrics = "richness", ...) {
 
   rows <- lapply(names(values), function(name) {
     v <- values[[name]]
-    v <- v[is.finite(v)]
-    m <- if (length(v) > 0) mean(v) else NA_real_
-    s <- if (length(v) > 1) stats::sd(v) else NA_real_
-    cv <- if (!is.na(m) && !is.na(s) && m != 0) 100 * s / m else NA_real_
-    data.frame(metric = name, n_units = length(v), mean = m, sd = s, cv = cv)
+    s <- cv_stats(v[is.finite(v)])
+    data.frame(metric = name, n_units = s$n, mean = s$mean, sd = s$sd,
+               cv = s$cv)
   })
   structure(do.call(rbind, rows), data = describe_data(x),
             n_total = nrow(x$comm),

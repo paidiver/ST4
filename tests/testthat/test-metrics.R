@@ -137,3 +137,83 @@ test_that("stops on bad metrics", {
   expect_error(su_metrics(x, character(0)), "at least one")
   expect_error(su_metrics(data.frame()), "su_data")
 })
+
+test_that("summary gives the survey design values for each metric", {
+  m <- suppressWarnings(
+    su_metrics(metrics_data(), c("richness", "abundance", "invsimpson"))
+  )
+  s <- summary(m)
+  expect_s3_class(s, "summary.su_metrics")
+  expect_equal(s$metric, c("richness", "abundance", "invsimpson"))
+
+  # Richness: 2, 0, 4, 1. Mean 7 / 4 = 1.75
+  # Deviations 0.25, -1.75, 2.25, -0.75. Squares sum to 8.75
+  # SD = sqrt(8.75 / 3) = 1.7078. CV = 100 * 1.7078 / 1.75 = 97.59%
+  # One zero (t2), none left out
+  expect_equal(s$n_units[1], 4)
+  expect_equal(s$mean[1], 1.75)
+  expect_equal(s$sd[1], sqrt(8.75 / 3))
+  expect_equal(s$cv[1], 100 * sqrt(8.75 / 3) / 1.75)
+  expect_equal(s$zeros[1], 1)
+  expect_equal(s$left_out[1], 0)
+
+  # Abundance: 4, 0, 4, 5. Mean 13 / 4 = 3.25
+  # Deviations 0.75, -3.25, 0.75, 1.75. Squares sum to 14.75
+  # SD = sqrt(14.75 / 3) = 2.2174. CV = 100 * 2.2174 / 3.25 = 68.23%
+  expect_equal(s$cv[2], 100 * sqrt(14.75 / 3) / 3.25)
+  expect_equal(s$zeros[2], 1)
+
+  # Inverse Simpson = 1 / sum(p_i^2)
+  # t1: 1 / (0.75^2 + 0.25^2) = 1 / 0.625 = 1.6
+  # t2: no individuals, Inf, so left out
+  # t3: 1 / (4 * 0.25^2) = 4. t4: 1 / 1^2 = 1
+  # Mean (1.6 + 4 + 1) / 3 = 2.2
+  # Deviations -0.6, 1.8, -1.2. Squares sum to 5.04
+  # SD = sqrt(5.04 / 2) = 1.5875. CV = 100 * 1.5875 / 2.2 = 72.16%
+  expect_equal(s$n_units[3], 3)
+  expect_equal(s$mean[3], 2.2)
+  expect_equal(s$cv[3], 100 * sqrt(5.04 / 2) / 2.2)
+  expect_equal(s$zeros[3], 0)
+  expect_equal(s$left_out[3], 1)
+})
+
+test_that("summary matches metric_cv", {
+  m <- su_metrics(metrics_data(), c("richness", "density"))
+  cv <- metric_cv(metrics_data(), c("richness", "density"))
+  s <- summary(m)
+  expect_equal(s$n_units, cv$n_units)
+  expect_equal(s$mean, cv$mean)
+  expect_equal(s$sd, cv$sd)
+  expect_equal(s$cv, cv$cv)
+})
+
+test_that("summary printout names the most variable metric", {
+  s <- summary(suppressWarnings(
+    su_metrics(metrics_data(), c("richness", "abundance", "invsimpson"))
+  ))
+  out <- capture.output(print(s))
+  expect_match(out[1], "Summary of metrics for survey design")
+  expect_match(out, "Data: 4 images, stratum all", all = FALSE)
+  # Richness has the highest CV: 97.6% against 68.2% and 72.2%
+  expect_match(out, "Most variable: richness \\(CV 97.6%\\)", all = FALSE)
+  expect_match(out, "left out for that metric", all = FALSE)
+})
+
+test_that("summary works on a subset of the metric columns", {
+  m <- su_metrics(metrics_data(), c("richness", "abundance", "density"))
+  s <- summary(m[c("richness", "density")])
+  expect_equal(s$metric, c("richness", "density"))
+  expect_equal(s$mean[1], 1.75)
+  expect_output(print(s), "Most variable")
+  expect_error(summary(m["FileName"]), "No metric columns")
+})
+
+test_that("summary says when no CV can be worked out", {
+  counts <- data.frame(image = c("a", "b"), sp = c(0, 0))
+  meta <- data.frame(FileName = c("a", "b"), Area_seabed_m2 = c(5, 5))
+  # Richness 0 and 0: mean 0, so no CV
+  s <- summary(su_metrics(read_counts(counts, meta)))
+  expect_true(is.na(s$cv))
+  expect_equal(s$zeros, 2)
+  expect_output(print(s), "No CV could be worked out")
+})
