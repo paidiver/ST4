@@ -2,12 +2,13 @@
 % Please edit documentation in R/metrics.R
 \name{su_metrics}
 \alias{su_metrics}
-\title{Metrics for each tile or sample unit}
+\title{Metrics for each image or sample unit}
 \usage{
 su_metrics(x, metrics = "richness", ...)
 }
 \arguments{
-\item{x}{An \code{su_data} object from \code{\link[=read_counts]{read_counts()}} or \code{\link[=select_stratum]{select_stratum()}}.}
+\item{x}{An \code{su_data} object: single images from \code{\link[=read_counts]{read_counts()}} or
+\code{\link[=select_stratum]{select_stratum()}}, or composite SUs from \code{\link[=build_sample_units]{build_sample_units()}}.}
 
 \item{metrics}{Names of the metrics to calculate (see the table above),
 and/or named functions. Defaults to richness.}
@@ -16,7 +17,7 @@ and/or named functions. Defaults to richness.}
 Shannon in bits instead of the natural log.}
 }
 \value{
-A \code{su_metrics} object: a data frame with one row per tile or
+A \code{su_metrics} object: a data frame with one row per image or
 sample unit. The first column holds the ids and the others hold one
 metric each. Use \link[=plot.su_metrics]{plot()} to see how each metric is
 spread across the units.

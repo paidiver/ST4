@@ -1,17 +1,17 @@
 # Small made-up data where the answers can be worked out by hand.
 #
-#   tile  a  b  c  d   area (m²)
+#   image  a  b  c  d   area (m²)
 #   t1    3  1  0  0   2
 #   t2    0  0  0  0   5
 #   t3    1  1  1  1   8
 #   t4    5  0  0  0   10
 #
-# p_i is the proportion of a tile's individuals in taxon i.
+# p_i is the proportion of an image's individuals in taxon i.
 # Shannon H' = -sum(p_i * ln p_i). Simpson D = sum(p_i^2).
 # Simpson index = 1 - D. Inverse Simpson = 1 / D. Pielou J' = H' / ln(richness).
 metrics_data <- function() {
   counts <- data.frame(
-    tile = c("t1", "t2", "t3", "t4"),
+    image = c("t1", "t2", "t3", "t4"),
     a = c(3, 0, 1, 5),
     b = c(1, 0, 1, 0),
     c = c(0, 0, 1, 0),
@@ -37,7 +37,7 @@ test_that("gives the right answers on known data", {
   expect_warning(
     out <- su_metrics(metrics_data(), c("abundance", "density", "shannon",
                                         "simpson", "invsimpson", "pielou")),
-    "1 of 4 tiles have no individuals"
+    "1 of 4 images have no individuals"
   )
   # Abundance is the row total: t1 3 + 1 = 4, t2 0, t3 1 + 1 + 1 + 1 = 4, t4 5
   expect_equal(out$abundance, c(4, 0, 4, 5))
@@ -80,7 +80,7 @@ test_that("returns vegan's values for empty units, with a warning", {
   expect_warning(
     out <- su_metrics(metrics_data(), c("shannon", "simpson", "invsimpson",
                                         "pielou")),
-    "1 of 4 tiles have no individuals"
+    "1 of 4 images have no individuals"
   )
   # t2 is empty. vegan sums over no taxa, so H' = 0 and D = 0, giving
   #   Shannon 0, Simpson 1 - 0 = 1 and inverse Simpson 1 / 0 = Inf
@@ -97,7 +97,7 @@ test_that("returns vegan's values for empty units, with a warning", {
 })
 
 test_that("no warning when empty units only affect other metrics", {
-  # Richness, abundance and density are fine on an empty tile: 0, 0 and 0
+  # Richness, abundance and density are fine on an empty image: 0, 0 and 0
   expect_no_warning(su_metrics(metrics_data(),
                                c("richness", "abundance", "density")))
 })

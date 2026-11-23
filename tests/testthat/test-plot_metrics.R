@@ -1,7 +1,7 @@
 # Small made-up data where the right answer is known
 plot_data <- function() {
   counts <- data.frame(
-    tile = paste0("t", 1:6),
+    image = paste0("t", 1:6),
     a = c(2, 0, 1, 4, 0, 3),
     b = c(0, 3, 1, 0, 0, 2),
     c = c(0, 0, 0, 1, 0, 0)
@@ -11,7 +11,7 @@ plot_data <- function() {
     Area_seabed_m2 = c(5, 6, 5, 7, 5, 6),
     Substratum = "sand"
   )
-  select_stratum(read_counts(counts, metadata, data_citation = "Test tiles"),
+  select_stratum(read_counts(counts, metadata, data_citation = "Test images"),
                  "sand")
 }
 
@@ -29,9 +29,9 @@ test_that("su_metrics results keep a description of the data", {
   m <- su_metrics(plot_data(), c("richness", "abundance"))
   expect_s3_class(m, "su_metrics")
   expect_s3_class(m, "data.frame")
-  expect_equal(attr(m, "data"), "6 tiles, stratum Substratum = sand")
-  expect_equal(attr(m, "unit"), "tiles")
-  expect_equal(attr(m, "data_citation"), "Test tiles")
+  expect_equal(attr(m, "data"), "6 images, stratum Substratum = sand")
+  expect_equal(attr(m, "unit"), "images")
+  expect_equal(attr(m, "data_citation"), "Test images")
 })
 
 test_that("plot of su_metrics works", {
@@ -45,12 +45,12 @@ test_that("plot of su_metrics works", {
 
 test_that("plot of metric_cv works alone and compared", {
   x <- plot_data()
-  tiles <- metric_cv(x, c("richness", "abundance"))
-  sus <- metric_cv(build_sample_units(x, type = "tiles", size = 2, seed = 1),
+  images <- metric_cv(x, c("richness", "abundance"))
+  sus <- metric_cv(build_sample_units(x, type = "images", size = 2, seed = 1),
                    c("richness", "abundance"))
-  expect_plots(function() plot(tiles))
-  expect_plots(function() plot(tiles, sus))
-  expect_error(plot(tiles, data.frame()), "metric_cv object")
+  expect_plots(function() plot(images))
+  expect_plots(function() plot(images, sus))
+  expect_error(plot(images, data.frame()), "metric_cv object")
 })
 
 test_that("plot of sample_size_data works, including more than max_n", {
@@ -66,7 +66,7 @@ test_that("compare plot of curves works", {
              seed = 1)
   )
   expect_plots(function() plot(curves, compare = TRUE))
-  expect_plots(function() plot(curves, compare = TRUE, x_axis = "tiles"))
+  expect_plots(function() plot(curves, compare = TRUE, x_axis = "images"))
 })
 
 test_that("the worst case is the metric with the highest CV", {
@@ -79,8 +79,8 @@ test_that("the worst case is the metric with the highest CV", {
 })
 
 test_that("helpers split the data description", {
-  data <- "160 tiles, stratum Substratum = sand"
-  expect_equal(describe_units(data), "160 tiles")
+  data <- "160 images, stratum Substratum = sand"
+  expect_equal(describe_units(data), "160 images")
   expect_equal(describe_data_stratum(data), "Substratum = sand")
   expect_equal(format_bar_values(matrix(c(12.34, NA)), "%"),
                matrix(c("12.3%", "NA")))

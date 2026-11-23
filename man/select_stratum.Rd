@@ -2,23 +2,23 @@
 % Please edit documentation in R/stratum.R
 \name{select_stratum}
 \alias{select_stratum}
-\title{Select the tiles in one stratum}
+\title{Select the images in one stratum}
 \usage{
 select_stratum(x, stratum, by = "Substratum")
 }
 \arguments{
-\item{x}{An \code{su_data} object from \code{\link[=read_counts]{read_counts()}}.}
+\item{x}{An \code{su_images} object from \code{\link[=read_counts]{read_counts()}}.}
 
 \item{stratum}{The stratum to keep, for example \code{"sand"}.}
 
 \item{by}{Name of the metadata column that holds the strata.}
 }
 \value{
-An \code{su_data} object holding only the tiles in \code{stratum}. The chosen
+An \code{su_images} object holding only the images in \code{stratum}. The chosen
 column and stratum are kept in \code{x$settings$by} and \code{x$settings$stratum}.
 }
 \description{
-Keeps only the tiles in one stratum, such as one substratum or one habitat.
+Keeps only the images in one stratum, such as one substratum or one habitat.
 Sample units are built and compared within a single stratum, so this is
 usually the step after \code{\link[=read_counts]{read_counts()}}.
 }
@@ -28,7 +28,7 @@ Taxa with zero counts do not change richness or the diversity indices.
 }
 \examples{
 counts <- data.frame(
-  tile = c("t1", "t2", "t3"),
+  image = c("t1", "t2", "t3"),
   asterias = c(2, 0, 1),
   cerianthid = c(0, 3, 1)
 )

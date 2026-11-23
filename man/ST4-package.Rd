@@ -8,6 +8,32 @@
 \description{
 Tools to choose sample unit size and number of sample units for photographic seabed surveys, following Durden et al. (2016). Metrics are calculated by vegan.
 }
+\section{Terms}{
+
+\itemize{
+\item \strong{Image}: a single photo of the seabed. The input data has one row of
+counts per image, with its seabed area. Data from photos stitched into a
+larger mosaic and cut into pieces ("tiles") is treated the same way, one
+row per piece.
+\item \strong{Sample unit (SU)}: the replicate a metric is measured on and that the
+survey is designed around (n in Equation 1 of Durden et al. 2016, see
+\code{\link[=sample_size]{sample_size()}}). There are two kinds:
+\itemize{
+\item \strong{Single-image SU}: one image. \code{\link[=read_counts]{read_counts()}} and \code{\link[=select_stratum]{select_stratum()}}
+give these, as an \code{su_images} object.
+\item \strong{Composite SU}: several images chosen at random from one stratum and
+pooled until they reach a target size (seabed area, individuals or
+number of images). \code{\link[=build_sample_units]{build_sample_units()}} gives these, as an
+\code{su_composite} object.
+}
+}
+
+In one analysis each image is either its own SU or part of one composite
+SU, never both. Both kinds are \code{su_data} objects, so \code{\link[=su_metrics]{su_metrics()}},
+\code{\link[=metric_cv]{metric_cv()}} and \code{\link[=sample_size_data]{sample_size_data()}} work on either. The number of
+images needed for a survey is the number of SUs times the images per SU.
+}
+
 \section{AI assistance}{
 
 Large language models (LLMs) were used to help create this package. All

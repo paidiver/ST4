@@ -37,11 +37,11 @@ test_that("the files have the same layout as the real files", {
   expect_false(identical(counts[[1]], metadata$FileName))
 })
 
-test_that("hard substrata have more individuals per tile than sand", {
+test_that("hard substrata have more individuals per image than sand", {
   files <- synthetic_files()
   x <- read_counts(files[["counts"]], files[["metadata"]])
-  per_tile <- function(s) mean(rowSums(select_stratum(x, s)$comm))
-  expect_gt(per_tile("hard"), 5 * per_tile("sand"))
+  per_image <- function(s) mean(rowSums(select_stratum(x, s)$comm))
+  expect_gt(per_image("hard"), 5 * per_image("sand"))
 })
 
 test_that("making the data does not change the user's random numbers", {

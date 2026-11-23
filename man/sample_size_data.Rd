@@ -13,7 +13,8 @@ sample_size_data(
 )
 }
 \arguments{
-\item{x}{An \code{su_data} object from \code{\link[=read_counts]{read_counts()}} or \code{\link[=select_stratum]{select_stratum()}}.}
+\item{x}{An \code{su_data} object: single images from \code{\link[=read_counts]{read_counts()}} or
+\code{\link[=select_stratum]{select_stratum()}}, or composite SUs from \code{\link[=build_sample_units]{build_sample_units()}}.}
 
 \item{delta}{Smallest true differences to detect, in \% of the mean. One
 column of results is given for each.}

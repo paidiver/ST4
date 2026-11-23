@@ -4,11 +4,15 @@
 \alias{sample_unit_control}
 \title{Settings for building sample units}
 \usage{
-sample_unit_control(type = c("area", "individuals", "tiles"), size = NULL, ...)
+sample_unit_control(
+  type = c("area", "individuals", "images"),
+  size = NULL,
+  ...
+)
 }
 \arguments{
-\item{type}{How to group the tiles: \code{"area"}, \code{"individuals"} or
-\code{"tiles"}.}
+\item{type}{How to group the images: \code{"area"}, \code{"individuals"} or
+\code{"images"}.}
 
 \item{size}{Target size of each SU, in the units of \code{type}. Leave it out
 to use the default for that type (see the table above).}
@@ -26,16 +30,16 @@ default, so you only need to give the ones you want to change. Settings can
 be changed in the same three ways as \code{\link[=sample_size_control]{sample_size_control()}}.
 }
 \details{
-There are three ways to group tiles into sample units (SUs):\tabular{lll}{
+There are three ways to group images into sample units (SUs):\tabular{lll}{
    \code{type} \tab Each SU holds \tab Default \code{size} \cr
-   \code{"area"} \tab Tiles until the seabed area reaches \code{size} m² \tab 150 \cr
-   \code{"individuals"} \tab Tiles until the number of individuals reaches \code{size} \tab 150 \cr
-   \code{"tiles"} \tab A set number of tiles, \code{size} \tab 20 \cr
+   \code{"area"} \tab Images until the seabed area reaches \code{size} m² \tab 150 \cr
+   \code{"individuals"} \tab Images until the number of individuals reaches \code{size} \tab 150 \cr
+   \code{"images"} \tab A set number of images, \code{size} \tab 20 \cr
 }
 
 
 The 150 m² and 150 individuals follow the composite sample units of
-Benoist et al. (2019). The 20 tiles follows the script used for that
+Benoist et al. (2019). The 20 images follow the script used for that
 paper.
 }
 \examples{

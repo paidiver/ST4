@@ -1,22 +1,22 @@
-#' Select the tiles in one stratum
+#' Select the images in one stratum
 #'
-#' Keeps only the tiles in one stratum, such as one substratum or one habitat.
+#' Keeps only the images in one stratum, such as one substratum or one habitat.
 #' Sample units are built and compared within a single stratum, so this is
 #' usually the step after [read_counts()].
 #'
 #' All taxa are kept, including any with no individuals in the chosen stratum.
 #' Taxa with zero counts do not change richness or the diversity indices.
 #'
-#' @param x An `su_data` object from [read_counts()].
+#' @param x An `su_images` object from [read_counts()].
 #' @param stratum The stratum to keep, for example `"sand"`.
 #' @param by Name of the metadata column that holds the strata.
 #'
-#' @return An `su_data` object holding only the tiles in `stratum`. The chosen
+#' @return An `su_images` object holding only the images in `stratum`. The chosen
 #'   column and stratum are kept in `x$settings$by` and `x$settings$stratum`.
 #'
 #' @examples
 #' counts <- data.frame(
-#'   tile = c("t1", "t2", "t3"),
+#'   image = c("t1", "t2", "t3"),
 #'   asterias = c(2, 0, 1),
 #'   cerianthid = c(0, 3, 1)
 #' )
@@ -43,7 +43,7 @@ select_stratum <- function(x, stratum, by = "Substratum") {
   values <- x$meta[[by]]
   keep <- !is.na(values) & values == stratum
   if (!any(keep)) {
-    stop("No tiles with ", by, " = \"", stratum, "\". Strata in the data: ",
+    stop("No images with ", by, " = \"", stratum, "\". Strata in the data: ",
          show_some(sort(unique(values)), n = 20), call. = FALSE)
   }
 
@@ -52,7 +52,7 @@ select_stratum <- function(x, stratum, by = "Substratum") {
   out <- new_su_data(x$comm[keep, , drop = FALSE], meta,
                      id = x$settings$id, area = x$settings$area,
                      data_citation = x$settings$data_citation,
-                     unit = x$settings$unit)
+                     kind = class(x)[1])
   out$settings$by <- by
   out$settings$stratum <- stratum
   out

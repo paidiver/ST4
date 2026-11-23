@@ -1,7 +1,7 @@
 # Small made-up data where the right answer is known
 strata_data <- function() {
   counts <- data.frame(
-    tile = c("t1", "t2", "t3", "t4"),
+    image = c("t1", "t2", "t3", "t4"),
     asterias = c(2, 0, 1, 4),
     cerianthid = c(0, 3, 1, 0)
   )
@@ -14,10 +14,10 @@ strata_data <- function() {
   read_counts(counts, metadata)
 }
 
-test_that("keeps only the tiles in the stratum", {
+test_that("keeps only the images in the stratum", {
   y <- select_stratum(strata_data(), "sand")
 
-  expect_s3_class(y, "su_data")
+  expect_s3_class(y, c("su_images", "su_data"), exact = TRUE)
   expect_equal(rownames(y$comm), c("t2", "t3"))
   expect_equal(y$meta$FileName, c("t2", "t3"))
   expect_true(all(y$meta$Substratum == "sand"))
@@ -29,12 +29,12 @@ test_that("matches the stratum exactly, not partly", {
   expect_equal(rownames(y$comm), "t1")
 })
 
-test_that("keeps all taxa and the counts for kept tiles", {
+test_that("keeps all taxa and the counts for kept images", {
   x <- strata_data()
   y <- select_stratum(x, "sand")
   expect_equal(colnames(y$comm), colnames(x$comm))
   expect_equal(y$comm, x$comm[c("t2", "t3"), ])
-  # Sand tiles t2 and t3: asterias 0 + 1 = 1, cerianthid 3 + 1 = 4, total 5
+  # Sand images t2 and t3: asterias 0 + 1 = 1, cerianthid 3 + 1 = 4, total 5
   expect_equal(sum(y$comm), 5)
 })
 
@@ -56,7 +56,7 @@ test_that("strata split the data with nothing lost", {
 })
 
 test_that("keeps the unit type", {
-  expect_equal(select_stratum(strata_data(), "sand")$settings$unit, "tiles")
+  expect_equal(select_stratum(strata_data(), "sand")$settings$unit, "images")
 })
 
 test_that("print shows the stratum", {
@@ -66,7 +66,7 @@ test_that("print shows the stratum", {
 
 test_that("stops on bad input", {
   x <- strata_data()
-  expect_error(select_stratum(x, "mud"), "No tiles with Substratum = \"mud\"")
+  expect_error(select_stratum(x, "mud"), "No images with Substratum = \"mud\"")
   expect_error(select_stratum(x, "mud"), "hard, hard \\+ sand, sand")
   expect_error(select_stratum(x, c("hard", "sand")), "single value")
   expect_error(select_stratum(x, "sand", by = "Depth"), "`Depth` not found")
