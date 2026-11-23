@@ -2,7 +2,7 @@
 % Please edit documentation in R/read.R
 \name{read_counts}
 \alias{read_counts}
-\title{Read counts and metadata for each tile}
+\title{Read counts and metadata for each image}
 \usage{
 read_counts(
   counts,
@@ -18,7 +18,7 @@ read_counts(
 \item{metadata}{Path to a CSV file of metadata, or a data frame of
 metadata.}
 
-\item{id}{Name of the tile id column in \code{metadata}.}
+\item{id}{Name of the image id column in \code{metadata}.}
 
 \item{area}{Name of the seabed area column in \code{metadata}, in m².}
 
@@ -28,34 +28,35 @@ through every later step and shown in printouts and plots, so results
 always say where the data came from. It cannot be left empty.}
 }
 \value{
-An \code{su_data} object. This is a list with:
+An \code{su_images} object, with class \code{c("su_images", "su_data")}:
+each image is a single-image SU (see \link{ST4-package}). This is a list with:
 \itemize{
-\item \code{comm}: numeric matrix of counts with one row per tile and one column
-per taxon. Row names are the tile ids. This is the community matrix
+\item \code{comm}: numeric matrix of counts with one row per image and one column
+per taxon. Row names are the image ids. This is the community matrix
 format that vegan uses.
 \item \code{meta}: data frame of metadata, with rows in the same order as \code{comm}.
 \item \code{settings}: the \code{id} and \code{area} column names.
 }
 }
 \description{
-Loads a counts table and a metadata table, joins them by tile id and checks
-them. The result is an \code{su_data} object that the other functions in the
-package take as input.
+Loads a counts table and a metadata table, joins them by image id and checks
+them. The result is an \code{su_images} object (a kind of \code{su_data}) that the
+other functions in the package take as input.
 }
 \details{
-The counts table has one row per tile and one column per taxon. Its first
-column holds the tile ids. The metadata table has one row per tile, with a
-column of tile ids, a column of seabed area and any other information such
+The counts table has one row per image and one column per taxon. Its first
+column holds the image ids. The metadata table has one row per image, with a
+column of image ids, a column of seabed area and any other information such
 as substratum or habitat.
 
-The tables are joined by tile id, never by row order, so the rows can be in
-any order. Every tile must appear exactly once in both tables. Columns with
+The tables are joined by image id, never by row order, so the rows can be in
+any order. Every image must appear exactly once in both tables. Columns with
 a blank name, such as the row numbers that \code{\link[utils:write.csv]{utils::write.csv()}} adds, are
 dropped from the metadata.
 }
 \examples{
 counts <- data.frame(
-  tile = c("t1", "t2", "t3"),
+  image = c("t1", "t2", "t3"),
   asterias = c(2, 0, 1),
   cerianthid = c(0, 3, 1)
 )
@@ -69,5 +70,5 @@ x
 x$comm
 
 # Say where the data came from
-read_counts(counts, metadata, data_citation = "Made-up example tiles")
+read_counts(counts, metadata, data_citation = "Made-up example images")
 }

@@ -3,17 +3,17 @@
 #' Two made-up CSV files in the same format as real seabed survey data, for
 #' trying out the package. None of the values come from a real survey.
 #'
-#' * `synthetic_counts.csv`: one row per tile and one column per taxon. The
-#'   first column holds the tile ids.
-#' * `synthetic_metadata.csv`: one row per tile, with columns `FileName`
-#'   (tile id), `Substratum`, `Habitat`, `Latitude`, `Longitude` and
+#' * `synthetic_counts.csv`: one row per image and one column per taxon. The
+#'   first column holds the image ids.
+#' * `synthetic_metadata.csv`: one row per image, with columns `FileName`
+#'   (image id), `Substratum`, `Habitat`, `Latitude`, `Longitude` and
 #'   `Area_seabed_m2`.
 #'
-#' There are 600 tiles of about 7 m² each and 40 taxa. The tiles are spread
+#' There are 600 images of about 7 m² each and 40 taxa. The images are spread
 #' over 7 substrata grouped into 4 habitats. Hard substrata have many more
-#' individuals per tile than sand and coarse ones, and each taxon is more
+#' individuals per image than sand and coarse ones, and each taxon is more
 #' common in one habitat. A few taxa are common and most are rare. The
-#' numbers of individuals per tile in each substratum are set to roughly
+#' numbers of individuals per image in each substratum are set to roughly
 #' match those published in Table 1 of Benoist et al. (2019). Coordinates are
 #' placed near 0° N 0° E so they cannot be mistaken for a real site.
 #'
@@ -39,13 +39,13 @@ NULL
 # tests to check the shipped files can be rebuilt exactly.
 make_synthetic_data <- function(seed = 2026) {
   withr::with_seed(seed, {
-    # Substrata, their habitat, number of tiles and mean individuals per tile
+    # Substrata, their habitat, number of images and mean individuals per image
     strata <- data.frame(
       substratum = c("hard", "hard + coarse", "hard + sand", "coarse + hard",
                      "sand + hard", "coarse", "sand"),
       habitat = c("hard", "hard", "hard", "intermediate", "intermediate",
                   "coarse", "sand"),
-      n_tiles = c(30, 50, 50, 130, 30, 150, 160),
+      n_images = c(30, 50, 50, 130, 30, 150, 160),
       mean_individuals = c(22, 17, 19, 2.5, 3.3, 0.7, 1.3)
     )
     habitats <- c("hard", "intermediate", "coarse", "sand")
@@ -57,49 +57,49 @@ make_synthetic_data <- function(seed = 2026) {
     preferred <- sample(habitats, n_taxa, replace = TRUE,
                         prob = c(0.5, 0.2, 0.15, 0.15))
 
-    tile_stratum <- rep(seq_len(nrow(strata)), strata$n_tiles)
-    n_tiles <- length(tile_stratum)
-    tile_habitat <- strata$habitat[tile_stratum]
+    image_stratum <- rep(seq_len(nrow(strata)), strata$n_images)
+    n_images <- length(image_stratum)
+    image_habitat <- strata$habitat[image_stratum]
 
-    pref <- outer(tile_habitat, preferred, function(h, p) ifelse(h == p, 4, 1))
+    pref <- outer(image_habitat, preferred, function(h, p) ifelse(h == p, 4, 1))
     share <- sweep(pref, 2, weight, "*")
     share <- share / rowSums(share)
-    mu <- share * strata$mean_individuals[tile_stratum]
+    mu <- share * strata$mean_individuals[image_stratum]
 
     # Clumped counts: negative binomial, like real seabed fauna
     counts <- matrix(stats::rnbinom(length(mu), mu = mu, size = 0.5),
-                     nrow = n_tiles)
+                     nrow = n_images)
     # Real files only list taxa that were seen, so every taxon gets at least
-    # one individual, in a tile of its preferred habitat
+    # one individual, in an image of its preferred habitat
     for (j in which(colSums(counts) == 0)) {
-      tiles <- which(tile_habitat == preferred[j])
-      i <- tiles[sample.int(length(tiles), 1)]
+      images <- which(image_habitat == preferred[j])
+      i <- images[sample.int(length(images), 1)]
       counts[i, j] <- 1
     }
 
-    ids <- sprintf("tile_%04d", seq_len(n_tiles))
+    ids <- sprintf("image_%04d", seq_len(n_images))
     dimnames(counts) <- list(ids, sprintf("taxon_%02d", seq_len(n_taxa)))
 
-    area <- 7.3 * exp(stats::rnorm(n_tiles, sd = 0.08))
+    area <- 7.3 * exp(stats::rnorm(n_images, sd = 0.08))
     area <- pmin(pmax(area, 4.6), 10.6)
 
     metadata <- data.frame(
       FileName = ids,
-      Substratum = strata$substratum[tile_stratum],
-      Habitat = tile_habitat,
-      Latitude = round(stats::runif(n_tiles, 0, 0.05), 6),
-      Longitude = round(stats::runif(n_tiles, 0, 0.05), 6),
+      Substratum = strata$substratum[image_stratum],
+      Habitat = image_habitat,
+      Latitude = round(stats::runif(n_images, 0, 0.05), 6),
+      Longitude = round(stats::runif(n_images, 0, 0.05), 6),
       Area_seabed_m2 = round(area, 6)
     )
     # Real metadata files are not in the same row order as the counts
-    metadata <- metadata[sample(n_tiles), ]
+    metadata <- metadata[sample(n_images), ]
 
     list(counts = as.data.frame(counts), metadata = metadata)
   })
 }
 
 # Writes the two CSVs like utils::write.csv() with row names, as in the real
-# files: a blank-named first column of tile ids (counts) or row numbers
+# files: a blank-named first column of image ids (counts) or row numbers
 # (metadata)
 write_synthetic_data <- function(data, dir) {
   utils::write.csv(data$counts, file.path(dir, "synthetic_counts.csv"))

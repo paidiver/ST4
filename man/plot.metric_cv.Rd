@@ -34,18 +34,18 @@ the most sample units. Its bar is outlined.
 }
 \details{
 Give a second \code{\link[=metric_cv]{metric_cv()}} result as \code{y} to compare the two, for example
-single tiles against composite sample units.
+single images against composite sample units.
 }
 \examples{
 counts_file <- system.file("extdata", "synthetic_counts.csv", package = "ST4")
 metadata_file <- system.file("extdata", "synthetic_metadata.csv",
                              package = "ST4")
 sand <- select_stratum(read_counts(counts_file, metadata_file), "sand")
-tiles <- metric_cv(sand, c("richness", "density"))
-plot(tiles)
+images <- metric_cv(sand, c("richness", "density"))
+plot(images)
 
-# Single tiles against composite sample units
+# Single images against composite sample units
 sus <- metric_cv(build_sample_units(sand, seed = 1),
                  c("richness", "density"))
-plot(tiles, sus)
+plot(images, sus)
 }

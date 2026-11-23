@@ -20,7 +20,7 @@
 \item{metrics}{Metrics to plot. Defaults to all of them.}
 
 \item{x_axis}{Size measures for the bottom axis and, optionally, the top
-axis: \code{"area"}, \code{"individuals"} or \code{"tiles"}.}
+axis: \code{"area"}, \code{"individuals"} or \code{"images"}.}
 
 \item{compare}{Draw all the metrics in one panel, each as a percentage of
 its value at the last step, to compare how quickly they settle.}
@@ -37,17 +37,17 @@ the median lines, such as \code{lwd}.}
 }
 \description{
 Draws one panel per metric from \code{\link[=su_curve]{su_curve()}}. The line is the median over
-the random orders of tiles and the shaded band holds the middle of them
+the random orders of images and the shaded band holds the middle of them
 (95\% by default). A panel on the right lists the settings used, and the
 data citation is shown along the bottom.
 }
 \details{
 With \code{compare = TRUE} all the metrics are drawn in one panel instead, each
 as a percentage of its value at the last step. This shows which metrics
-settle quickly and which need more tiles.
+settle quickly and which need more images.
 
 The sample unit size can be shown as seabed area, number of individuals or
-number of tiles (images). Give one to use along the bottom, or two to add
+number of images. Give one to use along the bottom, or two to add
 the second along the top. The top axis is matched to the bottom one using
 the median curves, so it is a guide.
 }
@@ -60,9 +60,9 @@ curves <- su_curve(sand, c("richness", "density"), times = 200, seed = 1)
 
 plot(curves)
 
-# Number of tiles along the bottom and seabed area along the top
-plot(curves, x_axis = c("tiles", "area"))
+# Number of images along the bottom and seabed area along the top
+plot(curves, x_axis = c("images", "area"))
 
 # Which metric settles first?
-plot(curves, compare = TRUE, x_axis = "tiles")
+plot(curves, compare = TRUE, x_axis = "images")
 }

@@ -2,7 +2,7 @@
 
 counts_df <- function() {
   data.frame(
-    tile = c("t1", "t2", "t3"),
+    image = c("t1", "t2", "t3"),
     asterias = c(2, 0, 1),
     cerianthid = c(0, 3, 1)
   )
@@ -16,10 +16,10 @@ metadata_df <- function() {
   )
 }
 
-test_that("joins by tile id, not by row order", {
+test_that("joins by image id, not by row order", {
   x <- read_counts(counts_df(), metadata_df())
 
-  expect_s3_class(x, "su_data")
+  expect_s3_class(x, c("su_images", "su_data"), exact = TRUE)
   expect_equal(rownames(x$comm), c("t1", "t2", "t3"))
   expect_equal(x$meta$FileName, c("t1", "t2", "t3"))
   # metadata lists t3, t1, t2, so after the join the areas move to
@@ -43,7 +43,7 @@ test_that("reads CSV files and drops blank-named columns", {
   meta_file <- withr::local_tempfile(fileext = ".csv")
   # write.csv adds a blank-named row number column, like Jen's files
   c_df <- counts_df()
-  rownames(c_df) <- c_df$tile
+  rownames(c_df) <- c_df$image
   utils::write.csv(c_df[-1], counts_file)
   utils::write.csv(metadata_df(), meta_file)
 
@@ -54,13 +54,13 @@ test_that("reads CSV files and drops blank-named columns", {
 
 test_that("uses other column names when given", {
   m <- metadata_df()
-  names(m)[1:2] <- c("tile_id", "area")
-  x <- read_counts(counts_df(), m, id = "tile_id", area = "area")
-  expect_equal(x$settings$id, "tile_id")
+  names(m)[1:2] <- c("image_id", "area")
+  x <- read_counts(counts_df(), m, id = "image_id", area = "area")
+  expect_equal(x$settings$id, "image_id")
   expect_equal(x$settings$area, "area")
 })
 
-test_that("stops when tile ids do not match", {
+test_that("stops when image ids do not match", {
   m <- metadata_df()
   m$FileName[1] <- "t9"
   expect_error(read_counts(counts_df(), m), "do not match")
@@ -68,7 +68,7 @@ test_that("stops when tile ids do not match", {
   expect_error(read_counts(counts_df(), m), "t9")
 })
 
-test_that("stops on repeated tile ids", {
+test_that("stops on repeated image ids", {
   m <- rbind(metadata_df(), metadata_df()[1, ])
   expect_error(read_counts(counts_df(), m), "repeated in `metadata`")
 })
@@ -97,7 +97,8 @@ test_that("stops on bad metadata", {
 test_that("print gives a summary", {
   x <- read_counts(counts_df(), metadata_df())
   expect_output(print(x), "Stratum: all \\(none selected\\)")
-  expect_output(print(x), "Units: 3 tiles")
+  expect_output(print(x), "^su_images")
+  expect_output(print(x), "Images: 3")
   expect_output(print(x), "Individuals: 7")
   expect_output(print(x), "Other metadata: Substratum")
 })
@@ -108,9 +109,9 @@ test_that("has a data citation, by default 'No Data Citation'", {
   expect_output(print(x), "Data citation: No Data Citation")
 
   y <- read_counts(counts_df(), metadata_df(),
-                   data_citation = "  Made-up example tiles  ")
+                   data_citation = "  Made-up example images  ")
   # Spaces at either end are trimmed
-  expect_equal(y$settings$data_citation, "Made-up example tiles")
+  expect_equal(y$settings$data_citation, "Made-up example images")
 })
 
 test_that("the data citation cannot be removed or left empty", {

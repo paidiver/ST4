@@ -1,7 +1,7 @@
 #' Plot the metrics for each unit
 #'
 #' Draws one histogram per metric from [su_metrics()], showing how the metric
-#' is spread across the tiles or sample units. The mean is marked, and its
+#' is spread across the images or sample units. The mean is marked, and its
 #' value and the coefficient of variation (CV) are written in each panel.
 #' Values that are `NA`, `NaN` or `Inf` are left out, and the panel says how
 #' many.
@@ -92,7 +92,7 @@ draw_histogram_panel <- function(p, bottom, top) {
 #' the most sample units. Its bar is outlined.
 #'
 #' Give a second [metric_cv()] result as `y` to compare the two, for example
-#' single tiles against composite sample units.
+#' single images against composite sample units.
 #'
 #' @param x A `metric_cv` object from [metric_cv()].
 #' @param y Optional second `metric_cv` object to compare with `x`. Only the
@@ -108,13 +108,13 @@ draw_histogram_panel <- function(p, bottom, top) {
 #' metadata_file <- system.file("extdata", "synthetic_metadata.csv",
 #'                              package = "ST4")
 #' sand <- select_stratum(read_counts(counts_file, metadata_file), "sand")
-#' tiles <- metric_cv(sand, c("richness", "density"))
-#' plot(tiles)
+#' images <- metric_cv(sand, c("richness", "density"))
+#' plot(images)
 #'
-#' # Single tiles against composite sample units
+#' # Single images against composite sample units
 #' sus <- metric_cv(build_sample_units(sand, seed = 1),
 #'                  c("richness", "density"))
-#' plot(tiles, sus)
+#' plot(images, sus)
 #' @export
 plot.metric_cv <- function(x, y = NULL, main = "Variation of each metric",
                            settings_panel = TRUE, ...) {
@@ -274,17 +274,17 @@ format_bar_values <- function(values, suffix) {
   matrix(out, nrow = nrow(values))
 }
 
-# "160 tiles, stratum Substratum = sand" to "160 tiles"
+# "160 images, stratum Substratum = sand" to "160 images"
 describe_units <- function(data) {
   sub(",.*$", "", data)
 }
 
-# "160 tiles, stratum Substratum = sand" to "Substratum = sand"
+# "160 images, stratum Substratum = sand" to "Substratum = sand"
 describe_data_stratum <- function(data) {
   sub("^.*?, stratum ", "", data)
 }
 
-# "tiles" to "Tiles"
+# "images" to "Images"
 tools_title <- function(x) {
   paste0(toupper(substring(x, 1, 1)), substring(x, 2))
 }

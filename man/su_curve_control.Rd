@@ -7,29 +7,29 @@
 su_curve_control(
   times = 1000,
   replace = TRUE,
-  max_tiles = NULL,
+  max_images = NULL,
   steps = NULL,
   band = 0.95,
   ...
 )
 }
 \arguments{
-\item{times}{Number of random orders of tiles to draw. The curve is the
+\item{times}{Number of random orders of images to draw. The curve is the
 median over all of them. 1000 follows the script used for Benoist et al.
 (2019).}
 
-\item{replace}{Draw tiles with replacement, as Benoist et al. (2019) did.
-A tile can then be drawn more than once, and the curve can go past the
-number of tiles in the stratum. Without replacement each tile is used
-once, so every order ends with the same tiles and the spread shrinks to
-0 at the last tile. A warning is given when this is \code{FALSE}.}
+\item{replace}{Draw images with replacement, as Benoist et al. (2019) did.
+An image can then be drawn more than once, and the curve can go past the
+number of images in the stratum. Without replacement each image is used
+once, so every order ends with the same images and the spread shrinks to
+0 at the last image. A warning is given when this is \code{FALSE}.}
 
-\item{max_tiles}{Number of tiles to add up to. Leave it out to use the
-number of tiles in the stratum, or the largest of \code{steps} if given.}
+\item{max_images}{Number of images to add up to. Leave it out to use the
+number of images in the stratum, or the largest of \code{steps} if given.}
 
-\item{steps}{Numbers of tiles to record the curve at, for example
+\item{steps}{Numbers of images to record the curve at, for example
 \code{c(1, 2, 5, 10, 20, 50, 100)}. Leave it out to record every number of
-tiles up to \code{max_tiles}. Fewer steps run faster and give a smaller
+images up to \code{max_images}. Fewer steps run faster and give a smaller
 result.}
 
 \item{band}{Share of the random orders inside the shaded band, centred on
@@ -51,7 +51,7 @@ in the same three ways as \code{\link[=sample_size_control]{sample_size_control(
 # All the defaults
 su_curve_control()
 
-# Fewer orders, recorded at a few numbers of tiles
+# Fewer orders, recorded at a few numbers of images
 su_curve_control(times = 200, steps = c(1, 5, 10, 50, 100))
 }
 \references{

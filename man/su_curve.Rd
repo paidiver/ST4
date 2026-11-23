@@ -13,7 +13,8 @@ su_curve(
 )
 }
 \arguments{
-\item{x}{An \code{su_data} object of tiles, from \code{\link[=select_stratum]{select_stratum()}}.}
+\item{x}{An \code{su_images} object, from \code{\link[=select_stratum]{select_stratum()}}. Composite SUs
+cannot be used.}
 
 \item{metrics}{Metrics to work out, as in \code{\link[=su_metrics]{su_metrics()}}. Defaults to
 richness.}
@@ -30,27 +31,27 @@ through \code{control}. For example \code{times = 200}.}
 }
 \value{
 A \code{su_curve} object: a data frame with one row per number of
-tiles and metric. The columns are \code{tiles}, \code{area} and \code{individuals}
+images and metric. The columns are \code{images}, \code{area} and \code{individuals}
 (medians over the random orders), \code{metric}, and the metric's \code{median},
 \code{lower} and \code{upper} (edges of the band), \code{mean} and \code{sd}. The settings
 used are kept in \code{attr(x, "settings")}.
 }
 \description{
-Shows how each metric changes as more tiles are pooled into one sample
-unit, to help choose the sample unit size. Tiles are drawn in a random
+Shows how each metric changes as more images are pooled into one sample
+unit, to help choose the sample unit size. Images are drawn in a random
 order and added one at a time. At each step the metric is worked out on
-all the tiles drawn so far, pooled: density is all the individuals over
+all the images drawn so far, pooled: density is all the individuals over
 all the seabed area, and diversity indices are worked out by vegan on the
 summed counts. This is repeated for many random orders, and the curve is
-the median at each number of tiles, with a band showing the spread.
+the median at each number of images, with a band showing the spread.
 }
 \details{
-This follows the approach of Benoist et al. (2019). By default tiles are
+This follows the approach of Benoist et al. (2019). By default images are
 drawn with replacement, as in that paper (see \code{\link[=su_curve_control]{su_curve_control()}}).
 
 The curves are worked out from running totals of the counts, so each
 random order needs only one call to vegan for each metric, however many
-tiles there are.
+images there are.
 }
 \examples{
 counts_file <- system.file("extdata", "synthetic_counts.csv", package = "ST4")

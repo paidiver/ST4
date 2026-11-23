@@ -7,7 +7,8 @@
 metric_cv(x, metrics = "richness", ...)
 }
 \arguments{
-\item{x}{An \code{su_data} object from \code{\link[=read_counts]{read_counts()}} or \code{\link[=select_stratum]{select_stratum()}}.}
+\item{x}{An \code{su_data} object: single images from \code{\link[=read_counts]{read_counts()}} or
+\code{\link[=select_stratum]{select_stratum()}}, or composite SUs from \code{\link[=build_sample_units]{build_sample_units()}}.}
 
 \item{metrics}{Names of the metrics to calculate (see the table above),
 and/or named functions. Defaults to richness.}
@@ -22,7 +23,7 @@ description of the data (units, stratum) is kept in \code{attr(x, "data")}
 and shown when printed.
 }
 \description{
-Calculates each metric for every tile or sample unit with \code{\link[=su_metrics]{su_metrics()}},
+Calculates each metric for every image or sample unit with \code{\link[=su_metrics]{su_metrics()}},
 then gives the mean, standard deviation and coefficient of variation (CV)
 of each metric across the units. The CV is what \code{\link[=sample_size]{sample_size()}} needs.
 }
@@ -30,13 +31,13 @@ of each metric across the units. The CV is what \code{\link[=sample_size]{sample
 CV (\%) = 100 * standard deviation / mean, using the sample standard
 deviation (\code{\link[stats:sd]{stats::sd()}}). Units where a metric is \code{NA}, \code{NaN} or \code{Inf}
 are left out for that metric, as no mean or CV can be worked out with
-them. For example inverse Simpson is \code{Inf} for a tile with no individuals.
+them. For example inverse Simpson is \code{Inf} for an image with no individuals.
 The \code{n_units} column shows how many units were used for each metric, and
 the printout says when any were left out. The CV is \code{NA} when the mean is
 0 or fewer than 2 units are left.
 
 The CV depends on the size of the units: it is usually much higher for
-single tiles than for composite sample units made of many tiles.
+single images than for composite sample units made of many images.
 }
 \examples{
 counts_file <- system.file("extdata", "synthetic_counts.csv", package = "ST4")

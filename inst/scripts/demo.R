@@ -51,29 +51,29 @@ table_delta <- c(20, 30, 40, 80, 100)
 # on its own to see them all.
 sample_size_settings <- sample_size_control()
 
-# How to build composite sample units (SUs) from tiles: "area" (m² of
-# seabed), "individuals" or "tiles". The SU size itself is chosen in step 5,
+# How to build composite sample units (SUs) from images: "area" (m² of
+# seabed), "individuals" or "images". The SU size itself is chosen in step 5,
 # after looking at the curves.
 su_type <- "area"
 
-# Settings for the sample unit size curves. By default tiles are drawn in
+# Settings for the sample unit size curves. By default images are drawn in
 # 1000 random orders, with replacement. Run su_curve_control() on its own to
 # see them all.
 su_curve_settings <- su_curve_control()
 
-# Seed for the random steps (curves and grouping tiles into SUs). The same
+# Seed for the random steps (curves and grouping images into SUs). The same
 # seed gives the same results.
 seed <- 1
 
 
 # ---- 1. Load the data --------------------------------------------------------
 
-# Reads both files and joins them by tile id
+# Reads both files and joins them by image id
 survey <- read_counts(counts_file, metadata_file,
                       data_citation = data_citation)
 survey
 
-# Counts for the first few tiles and taxa
+# Counts for the first few images and taxa
 survey$comm[1:5, 1:6]
 
 
@@ -83,15 +83,15 @@ one_stratum <- select_stratum(survey, stratum, by = stratum_by)
 one_stratum
 
 
-# ---- 3. Metrics for each tile ------------------------------------------------
+# ---- 3. Metrics for each image ------------------------------------------------
 
-# Calculated by vegan. One row per tile.
-tile_metrics <- su_metrics(one_stratum, metrics)
-head(tile_metrics)
-summary(tile_metrics[metrics])
+# Calculated by vegan. One row per image.
+image_metrics <- su_metrics(one_stratum, metrics)
+head(image_metrics)
+summary(image_metrics[metrics])
 
-# How each metric is spread across the tiles, with the mean marked
-plot(tile_metrics)
+# How each metric is spread across the images, with the mean marked
+plot(image_metrics)
 
 
 # ---- 4. Number of sample units needed ----------------------------------------
@@ -119,28 +119,28 @@ plot(needed, max_shown = 10, highlight = c(cv = guessed_cv, delta = delta))
 # Now replace the guess with CVs worked out from the data for each metric.
 # Different metrics vary by different amounts, so the survey should be
 # designed for the one that needs the most sample units (the worst case).
-from_tiles <- sample_size_data(one_stratum, delta = delta, metrics = metrics,
+from_images <- sample_size_data(one_stratum, delta = delta, metrics = metrics,
                                control = sample_size_settings)
-from_tiles
-plot(from_tiles)
+from_images
+plot(from_images)
 
-worst <- which.max(from_tiles$cv)
-cv_estimate <- from_tiles$cv[worst]
-n_needed <- from_tiles[[paste0("n_delta_", delta)]][worst]
+worst <- which.max(from_images$cv)
+cv_estimate <- from_images$cv[worst]
+n_needed <- from_images[[paste0("n_delta_", delta)]][worst]
 estimates <- rbind(estimates, data.frame(
-  stage = "Single tiles", units = "1 tile", metric = from_tiles$metric[worst],
+  stage = "Single images", units = "1 image", metric = from_images$metric[worst],
   cv = cv_estimate, n_needed = n_needed
 ))
 estimates
 
-# Single tiles vary a lot, so they need many sample units. Pooling tiles
+# Single images vary a lot, so they need many sample units. Pooling images
 # into bigger SUs smooths this out. Steps 5 and 6 find a good SU size.
 
 
 # ---- 5. Sample unit size curves ----------------------------------------------
 
-# How each metric changes as more tiles are pooled into one SU. Where a curve
-# flattens out, adding more tiles to an SU changes the metric little, which
+# How each metric changes as more images are pooled into one SU. Where a curve
+# flattens out, adding more images to an SU changes the metric little, which
 # helps choose the SU size for step 6.
 curves <- su_curve(one_stratum, metrics, control = su_curve_settings,
                    seed = seed)
@@ -148,13 +148,13 @@ curves
 
 # One panel per metric. The line is the median over the random orders and the
 # band holds the middle 95% of them. Seabed area is along the bottom and
-# individuals along the top. Try x_axis = c("tiles", "area") to show the
-# number of tiles (images) instead.
+# individuals along the top. Try x_axis = c("images", "area") to show the
+# number of images instead.
 plot(curves)
 
 # All the metrics in one panel, each as a % of its value at the last step.
 # The metric that takes longest to reach 100% needs the biggest SUs.
-plot(curves, compare = TRUE, x_axis = c("tiles", "area"))
+plot(curves, compare = TRUE, x_axis = c("images", "area"))
 
 # Decision: read the SU size off the curves, in the units of su_type. Here
 # the curves have mostly flattened out and the bands narrowed by about
@@ -164,13 +164,13 @@ su_size <- 150
 
 # ---- 6. Composite sample units -----------------------------------------------
 
-# Groups the tiles into SUs of the chosen size at random. Leftover tiles that
+# Groups the images into SUs of the chosen size at random. Leftover images that
 # do not fill an SU are dropped.
 sus <- build_sample_units(one_stratum, type = su_type, size = su_size,
                           seed = seed)
 sus
 
-# The tiles in each SU
+# The images in each SU
 head(sus$members)
 
 # Update the estimates with the CVs of the SUs
@@ -179,7 +179,7 @@ from_sus <- sample_size_data(sus, delta = delta, metrics = metrics,
 from_sus
 plot(from_sus)
 
-# How much less the metrics vary in SUs than in single tiles
+# How much less the metrics vary in SUs than in single images
 plot(metric_cv(one_stratum, metrics), metric_cv(sus, metrics))
 
 worst <- which.max(from_sus$cv)
@@ -188,7 +188,7 @@ n_needed <- from_sus[[paste0("n_delta_", delta)]][worst]
 estimates <- rbind(estimates, data.frame(
   stage = "Composite SUs",
   units = paste(su_size, c(area = "m²", individuals = "individuals",
-                           tiles = "tiles")[[su_type]]),
+                           images = "images")[[su_type]]),
   metric = from_sus$metric[worst], cv = cv_estimate, n_needed = n_needed
 ))
 
@@ -201,11 +201,11 @@ estimates
 
 # What the final estimate means for the survey, per stratum. Most of the time
 # what matters is how many images to take, as that sets the ship time.
-tiles_per_su <- mean(sus$meta$n_tiles)
+images_per_su <- mean(sus$meta$n_images)
 area_per_su  <- mean(sus$meta[[sus$settings$area]])
-cat(n_needed, " SUs per stratum, each about ", round(tiles_per_su),
+cat(n_needed, " SUs per stratum, each about ", round(images_per_su),
     " images (", round(area_per_su), " m²).\n",
-    "That is about ", ceiling(n_needed * tiles_per_su), " images and ",
+    "That is about ", ceiling(n_needed * images_per_su), " images and ",
     round(n_needed * area_per_su), " m² of seabed per stratum.\n", sep = "")
 
 

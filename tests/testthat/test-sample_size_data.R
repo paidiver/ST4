@@ -1,15 +1,15 @@
 # Small made-up data where the answers can be worked out by hand.
 #
-#   tile  a  b  c  d   area (m²)
+#   image  a  b  c  d   area (m²)
 #   t1    3  1  0  0   2
 #   t2    0  0  0  0   5
 #   t3    1  1  1  1   8
 #   t4    5  0  0  0   10
 #
-# Richness per tile is 2, 0, 4, 1.
+# Richness per image is 2, 0, 4, 1.
 cv_data <- function() {
   counts <- data.frame(
-    tile = c("t1", "t2", "t3", "t4"),
+    image = c("t1", "t2", "t3", "t4"),
     a = c(3, 0, 1, 5),
     b = c(1, 0, 1, 0),
     c = c(0, 0, 1, 0),
@@ -41,12 +41,12 @@ test_that("metric_cv leaves out units where a metric is not finite", {
   out <- suppressWarnings(
     metric_cv(cv_data(), c("richness", "shannon", "invsimpson"))
   )
-  # The empty tile t2 has Shannon 0, which is kept, so 4 tiles are used.
-  # Its inverse Simpson is 1 / 0 = Inf, so only 3 tiles are used for that.
+  # The empty image t2 has Shannon 0, which is kept, so 4 images are used.
+  # Its inverse Simpson is 1 / 0 = Inf, so only 3 images are used for that.
   expect_equal(out$n_units, c(4, 4, 3))
   expect_true(is.finite(out$cv[3]))
   expect_output(print(out), "left out for that metric")
-  # Richness uses all 4 tiles, so there is no note
+  # Richness uses all 4 images, so there is no note
   printed <- utils::capture.output(print(metric_cv(cv_data())))
   expect_false(any(grepl("left out", printed)))
 })
@@ -93,16 +93,16 @@ test_that("print flags the metric with the highest CV", {
 
   expect_output(print(out), paste0("Worst case: ", worst))
   expect_output(print(out), "2 strata compared, alpha 0.05")
-  # cv_data() has 4 tiles and no stratum selected
-  expect_output(print(out), "Data: 4 tiles, stratum all \\(none selected\\)")
+  # cv_data() has 4 images and no stratum selected
+  expect_output(print(out), "Data: 4 images, stratum all \\(none selected\\)")
 })
 
 test_that("metric_cv and sample_size_data say which data they came from", {
   files <- c(system.file("extdata", "synthetic_counts.csv", package = "ST4"),
              system.file("extdata", "synthetic_metadata.csv", package = "ST4"))
   x <- select_stratum(read_counts(files[1], files[2]), "hard")
-  # The synthetic data has 30 tiles in the hard substratum
-  label <- "Data: 30 tiles, stratum Substratum = hard"
+  # The synthetic data has 30 images in the hard substratum
+  label <- "Data: 30 images, stratum Substratum = hard"
   expect_output(print(metric_cv(x)), label)
   expect_output(print(sample_size_data(x, delta = 40)), label)
 })

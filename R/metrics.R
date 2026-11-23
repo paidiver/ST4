@@ -1,4 +1,4 @@
-#' Metrics for each tile or sample unit
+#' Metrics for each image or sample unit
 #'
 #' Calculates community metrics for each row of an `su_data` object. All the
 #' diversity calculations are done by vegan. This function only picks the
@@ -27,13 +27,14 @@
 #' 0 / ln(1) = 0 / 0. Transform or filter the data first if these values are
 #' not wanted.
 #'
-#' @param x An `su_data` object from [read_counts()] or [select_stratum()].
+#' @param x An `su_data` object: single images from [read_counts()] or
+#'   [select_stratum()], or composite SUs from [build_sample_units()].
 #' @param metrics Names of the metrics to calculate (see the table above),
 #'   and/or named functions. Defaults to richness.
 #' @param ... Passed on to [vegan::diversity()], for example `base = 2` for
 #'   Shannon in bits instead of the natural log.
 #'
-#' @return A `su_metrics` object: a data frame with one row per tile or
+#' @return A `su_metrics` object: a data frame with one row per image or
 #'   sample unit. The first column holds the ids and the others hold one
 #'   metric each. Use [plot()][plot.su_metrics()] to see how each metric is
 #'   spread across the units.
@@ -155,20 +156,20 @@ as_metric_list <- function(metrics) {
 
 #' Coefficient of variation of each metric
 #'
-#' Calculates each metric for every tile or sample unit with [su_metrics()],
+#' Calculates each metric for every image or sample unit with [su_metrics()],
 #' then gives the mean, standard deviation and coefficient of variation (CV)
 #' of each metric across the units. The CV is what [sample_size()] needs.
 #'
 #' CV (%) = 100 * standard deviation / mean, using the sample standard
 #' deviation ([stats::sd()]). Units where a metric is `NA`, `NaN` or `Inf`
 #' are left out for that metric, as no mean or CV can be worked out with
-#' them. For example inverse Simpson is `Inf` for a tile with no individuals.
+#' them. For example inverse Simpson is `Inf` for an image with no individuals.
 #' The `n_units` column shows how many units were used for each metric, and
 #' the printout says when any were left out. The CV is `NA` when the mean is
 #' 0 or fewer than 2 units are left.
 #'
 #' The CV depends on the size of the units: it is usually much higher for
-#' single tiles than for composite sample units made of many tiles.
+#' single images than for composite sample units made of many images.
 #'
 #' @inheritParams su_metrics
 #'

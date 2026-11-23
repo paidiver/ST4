@@ -3,7 +3,7 @@
 # every earlier plot underneath it.
 
 record_data <- function() {
-  counts <- data.frame(tile = paste0("t", 1:6), a = c(2, 0, 1, 4, 0, 3),
+  counts <- data.frame(image = paste0("t", 1:6), a = c(2, 0, 1, 4, 0, 3),
                        b = c(0, 3, 1, 0, 0, 2))
   metadata <- data.frame(FileName = paste0("t", 1:6),
                          Area_seabed_m2 = c(5, 6, 5, 7, 5, 6),

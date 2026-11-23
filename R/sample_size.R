@@ -11,6 +11,9 @@
 #' the test. Both t values are two-tailed: \eqn{t_{\alpha[v]}} is
 #' `qt(1 - alpha / 2, v)` and \eqn{t_{2(1-P)[v]}} is `qt(power, v)`.
 #'
+#' n counts SUs of whichever kind the CV came from: single images, or
+#' composite SUs from [build_sample_units()]. See [ST4-package] for the terms.
+#'
 #' n appears on both sides (through \eqn{v}), so it is found by stepping n up
 #' until the inequality holds. When the power is 0.5 or more, the search
 #' starts from the same formula with normal (z) values in place of t values.

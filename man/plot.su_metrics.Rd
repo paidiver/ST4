@@ -28,7 +28,7 @@
 }
 \description{
 Draws one histogram per metric from \code{\link[=su_metrics]{su_metrics()}}, showing how the metric
-is spread across the tiles or sample units. The mean is marked, and its
+is spread across the images or sample units. The mean is marked, and its
 value and the coefficient of variation (CV) are written in each panel.
 Values that are \code{NA}, \code{NaN} or \code{Inf} are left out, and the panel says how
 many.

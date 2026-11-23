@@ -2,12 +2,13 @@
 % Please edit documentation in R/sample_units.R
 \name{build_sample_units}
 \alias{build_sample_units}
-\title{Build composite sample units from tiles}
+\title{Build composite sample units from images}
 \usage{
 build_sample_units(x, control = sample_unit_control(), seed = NULL, ...)
 }
 \arguments{
-\item{x}{An \code{su_data} object of tiles, from \code{\link[=select_stratum]{select_stratum()}}.}
+\item{x}{An \code{su_images} object, from \code{\link[=select_stratum]{select_stratum()}}. Composite SUs
+cannot be used.}
 
 \item{control}{Settings from \code{\link[=sample_unit_control]{sample_unit_control()}}, or a list of them.}
 
@@ -17,31 +18,32 @@ your R session. If \code{NULL}, the session's random numbers are used, so
 \code{\link[=set.seed]{set.seed()}} works as usual.}
 
 \item{...}{Settings to change, given straight to this function instead of
-through \code{control}. For example \code{type = "tiles"}.}
+through \code{control}. For example \code{type = "images"}.}
 }
 \value{
-An \code{su_data} object with one row per SU. Its metadata has the
-columns \code{SU} (SU id), the seabed area and \code{n_tiles}. The tiles in each SU
-are listed in \code{x$members}, and the settings used and the number of tiles
+An \code{su_composite} object, with class
+\code{c("su_composite", "su_data")} and one row per SU. Its metadata has the
+columns \code{SU} (SU id), the seabed area and \code{n_images}. The images in each SU
+are listed in \code{x$members}, and the settings used and the number of images
 dropped are kept in \code{x$settings}.
 }
 \description{
-Puts the tiles in a random order and groups them into composite sample
+Puts the images in a random order and groups them into composite sample
 units (SUs) of a set size. This is a posteriori stratified random sampling,
 as in Benoist et al. (2019): SUs are built within one stratum, so use
 \code{\link[=select_stratum]{select_stratum()}} first.
 }
 \details{
-Tiles are added to an SU in their random order until it reaches the target
-size (see \code{\link[=sample_unit_control]{sample_unit_control()}}). The next tile then starts a new SU. An
-SU can go over the target by up to one tile. Tiles left over at the end
+Images are added to an SU in their random order until it reaches the target
+size (see \code{\link[=sample_unit_control]{sample_unit_control()}}). The next image then starts a new SU. An
+SU can go over the target by up to one image. Images left over at the end
 that do not reach the target are dropped, so every SU is at least the
-target size. The tiles are in a random order, so the tiles used are still
+target size. The images are in a random order, so the images used are still
 a random selection.
 
 The result is an \code{su_data} object with one row per SU, so \code{\link[=su_metrics]{su_metrics()}},
 \code{\link[=metric_cv]{metric_cv()}} and \code{\link[=sample_size_data]{sample_size_data()}} work on SUs the same way as on
-tiles. Counts and seabed area are summed over the tiles in each SU.
+images. Counts and seabed area are summed over the images in each SU.
 }
 \examples{
 counts_file <- system.file("extdata", "synthetic_counts.csv", package = "ST4")
@@ -54,11 +56,11 @@ sus <- build_sample_units(sand, seed = 1)
 sus
 head(sus$members)
 
-# Metrics and CVs work on SUs the same way as on tiles
+# Metrics and CVs work on SUs the same way as on images
 metric_cv(sus, c("richness", "density"))
 
-# SUs of 10 tiles each
-build_sample_units(sand, type = "tiles", size = 10, seed = 1)
+# SUs of 10 images each
+build_sample_units(sand, type = "images", size = 10, seed = 1)
 }
 \references{
 Benoist, N.M.A., Morris, K.J., Bett, B.J., et al. (2019). Monitoring mosaic

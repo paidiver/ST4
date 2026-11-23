@@ -4,19 +4,19 @@
 #' you only need to give the ones you want to change. Settings can be changed
 #' in the same three ways as [sample_size_control()].
 #'
-#' @param times Number of random orders of tiles to draw. The curve is the
+#' @param times Number of random orders of images to draw. The curve is the
 #'   median over all of them. 1000 follows the script used for Benoist et al.
 #'   (2019).
-#' @param replace Draw tiles with replacement, as Benoist et al. (2019) did.
-#'   A tile can then be drawn more than once, and the curve can go past the
-#'   number of tiles in the stratum. Without replacement each tile is used
-#'   once, so every order ends with the same tiles and the spread shrinks to
-#'   0 at the last tile. A warning is given when this is `FALSE`.
-#' @param max_tiles Number of tiles to add up to. Leave it out to use the
-#'   number of tiles in the stratum, or the largest of `steps` if given.
-#' @param steps Numbers of tiles to record the curve at, for example
+#' @param replace Draw images with replacement, as Benoist et al. (2019) did.
+#'   An image can then be drawn more than once, and the curve can go past the
+#'   number of images in the stratum. Without replacement each image is used
+#'   once, so every order ends with the same images and the spread shrinks to
+#'   0 at the last image. A warning is given when this is `FALSE`.
+#' @param max_images Number of images to add up to. Leave it out to use the
+#'   number of images in the stratum, or the largest of `steps` if given.
+#' @param steps Numbers of images to record the curve at, for example
 #'   `c(1, 2, 5, 10, 20, 50, 100)`. Leave it out to record every number of
-#'   tiles up to `max_tiles`. Fewer steps run faster and give a smaller
+#'   images up to `max_images`. Fewer steps run faster and give a smaller
 #'   result.
 #' @param band Share of the random orders inside the shaded band, centred on
 #'   the median. 0.95 gives the band from the 2.5% to the 97.5% quantile.
@@ -35,10 +35,10 @@
 #' # All the defaults
 #' su_curve_control()
 #'
-#' # Fewer orders, recorded at a few numbers of tiles
+#' # Fewer orders, recorded at a few numbers of images
 #' su_curve_control(times = 200, steps = c(1, 5, 10, 50, 100))
 #' @export
-su_curve_control <- function(times = 1000, replace = TRUE, max_tiles = NULL,
+su_curve_control <- function(times = 1000, replace = TRUE, max_images = NULL,
                              steps = NULL, band = 0.95, ...) {
   check_unknown_settings(list(...),
                          names(formals(su_curve_control)),
@@ -47,22 +47,22 @@ su_curve_control <- function(times = 1000, replace = TRUE, max_tiles = NULL,
   if (!is.logical(replace) || length(replace) != 1 || is.na(replace)) {
     stop("`replace` must be TRUE or FALSE.", call. = FALSE)
   }
-  if (!is.null(max_tiles)) check_count(max_tiles, "max_tiles", min = 1)
+  if (!is.null(max_images)) check_count(max_images, "max_images", min = 1)
   if (!is.null(steps)) {
     if (!is.numeric(steps) || length(steps) == 0 || anyNA(steps) ||
         any(steps < 1) || any(steps != round(steps))) {
       stop("`steps` must be whole numbers of 1 or more.", call. = FALSE)
     }
     steps <- sort(unique(steps))
-    if (!is.null(max_tiles) && any(steps > max_tiles)) {
-      stop("`steps` cannot go past `max_tiles` (", max_tiles, ").",
+    if (!is.null(max_images) && any(steps > max_images)) {
+      stop("`steps` cannot go past `max_images` (", max_images, ").",
            call. = FALSE)
     }
   }
   check_probability(band, "band")
 
   new_control(
-    list(times = times, replace = replace, max_tiles = max_tiles,
+    list(times = times, replace = replace, max_images = max_images,
          steps = steps, band = band),
     changed = setdiff(names(match.call())[-1], ""),
     class = "su_curve_control"
@@ -71,22 +71,23 @@ su_curve_control <- function(times = 1000, replace = TRUE, max_tiles = NULL,
 
 #' Sample unit size curves
 #'
-#' Shows how each metric changes as more tiles are pooled into one sample
-#' unit, to help choose the sample unit size. Tiles are drawn in a random
+#' Shows how each metric changes as more images are pooled into one sample
+#' unit, to help choose the sample unit size. Images are drawn in a random
 #' order and added one at a time. At each step the metric is worked out on
-#' all the tiles drawn so far, pooled: density is all the individuals over
+#' all the images drawn so far, pooled: density is all the individuals over
 #' all the seabed area, and diversity indices are worked out by vegan on the
 #' summed counts. This is repeated for many random orders, and the curve is
-#' the median at each number of tiles, with a band showing the spread.
+#' the median at each number of images, with a band showing the spread.
 #'
-#' This follows the approach of Benoist et al. (2019). By default tiles are
+#' This follows the approach of Benoist et al. (2019). By default images are
 #' drawn with replacement, as in that paper (see [su_curve_control()]).
 #'
 #' The curves are worked out from running totals of the counts, so each
 #' random order needs only one call to vegan for each metric, however many
-#' tiles there are.
+#' images there are.
 #'
-#' @param x An `su_data` object of tiles, from [select_stratum()].
+#' @param x An `su_images` object, from [select_stratum()]. Composite SUs
+#'   cannot be used.
 #' @param metrics Metrics to work out, as in [su_metrics()]. Defaults to
 #'   richness.
 #' @param control Settings from [su_curve_control()], or a list of them.
@@ -98,7 +99,7 @@ su_curve_control <- function(times = 1000, replace = TRUE, max_tiles = NULL,
 #'   through `control`. For example `times = 200`.
 #'
 #' @return A `su_curve` object: a data frame with one row per number of
-#'   tiles and metric. The columns are `tiles`, `area` and `individuals`
+#'   images and metric. The columns are `images`, `area` and `individuals`
 #'   (medians over the random orders), `metric`, and the metric's `median`,
 #'   `lower` and `upper` (edges of the band), `mean` and `sd`. The settings
 #'   used are kept in `attr(x, "settings")`.
@@ -120,28 +121,22 @@ su_curve_control <- function(times = 1000, replace = TRUE, max_tiles = NULL,
 #' @export
 su_curve <- function(x, metrics = "richness", control = su_curve_control(),
                      seed = NULL, ...) {
-  if (!inherits(x, "su_data")) {
-    stop("`x` must be an su_data object from read_counts().", call. = FALSE)
-  }
-  if (!identical(x$settings$unit, "tiles")) {
-    stop("`x` must hold tiles. It already holds ", x$settings$unit, ".",
-         call. = FALSE)
-  }
+  check_su_images(x)
   control <- resolve_control(control, list(...), su_curve_control)
   metrics <- as_metric_list(metrics)
   n <- nrow(x$comm)
 
-  # Fill in the number of tiles and the steps from the data
-  max_tiles <- control$max_tiles
-  if (is.null(max_tiles)) {
-    max_tiles <- if (is.null(control$steps)) n else max(control$steps)
+  # Fill in the number of images and the steps from the data
+  max_images <- control$max_images
+  if (is.null(max_images)) {
+    max_images <- if (is.null(control$steps)) n else max(control$steps)
   }
-  if (!control$replace && max_tiles > n) {
-    stop("Without replacement the curve cannot go past the ", n, " tiles ",
-         "in the data. Lower `max_tiles` or `steps`.", call. = FALSE)
+  if (!control$replace && max_images > n) {
+    stop("Without replacement the curve cannot go past the ", n, " images ",
+         "in the data. Lower `max_images` or `steps`.", call. = FALSE)
   }
-  steps <- if (is.null(control$steps)) seq_len(max_tiles) else control$steps
-  control$max_tiles <- max_tiles
+  steps <- if (is.null(control$steps)) seq_len(max_images) else control$steps
+  control$max_images <- max_images
   control$steps <- steps
 
   if (is.null(x$settings$stratum)) {
@@ -149,18 +144,18 @@ su_curve <- function(x, metrics = "richness", control = su_curve_control(),
             "select_stratum() first.", call. = FALSE)
   }
   if (!control$replace) {
-    warning("Tiles are drawn without replacement, so every order ends with ",
-            "the same tiles and the spread shrinks to 0 at the last tile.",
+    warning("Images are drawn without replacement, so every order ends with ",
+            "the same images and the spread shrinks to 0 at the last image.",
             call. = FALSE)
   }
 
   draw <- function() draw_curves(x, metrics, control$times, steps,
-                                 max_tiles, control$replace)
+                                 max_images, control$replace)
   runs <- if (is.null(seed)) draw() else withr::with_seed(seed, draw())
 
   if (runs$n_empty > 0 && any(unlist(metrics) %in% diversity_metrics)) {
     warning("In ", runs$n_empty, " of ", control$times * length(steps),
-            " steps the tiles drawn so far had no individuals. Diversity ",
+            " steps the images drawn so far had no individuals. Diversity ",
             "indices there are as vegan gives them (Shannon 0, Simpson 1, ",
             "inverse Simpson Inf).", call. = FALSE)
   }
@@ -172,7 +167,7 @@ su_curve <- function(x, metrics = "richness", control = su_curve_control(),
     band <- apply(v, 2, stats::quantile, probs = probs, na.rm = TRUE,
                   names = FALSE)
     data.frame(
-      tiles = steps,
+      images = steps,
       area = apply(runs$area, 2, stats::median),
       individuals = apply(runs$individuals, 2, stats::median),
       metric = name,
@@ -186,29 +181,29 @@ su_curve <- function(x, metrics = "richness", control = su_curve_control(),
 
   structure(do.call(rbind, rows), settings = control,
             data = describe_data(x), stratum = describe_stratum(x),
-            n_tiles = n,
+            n_images = n,
             data_citation = x$settings$data_citation,
             class = c("su_curve", "data.frame"))
 }
 
-# Draws `times` random orders of tiles. For each order, takes running totals
-# of the counts down the tiles, keeps the rows at `steps` and works out every
+# Draws `times` random orders of images. For each order, takes running totals
+# of the counts down the images, keeps the rows at `steps` and works out every
 # metric on those rows in one go. Returns arrays of
 # orders x steps (x metrics).
-draw_curves <- function(x, metrics, times, steps, max_tiles, replace) {
+draw_curves <- function(x, metrics, times, steps, max_images, replace) {
   n <- nrow(x$comm)
-  tile_area <- x$meta[[x$settings$area]]
+  image_area <- x$meta[[x$settings$area]]
   values <- array(NA_real_, dim = c(times, length(steps), length(metrics)),
                   dimnames = list(NULL, NULL, names(metrics)))
   area <- individuals <- matrix(NA_real_, times, length(steps))
   n_empty <- 0
 
   for (r in seq_len(times)) {
-    order <- sample(n, max_tiles, replace = replace)
+    order <- sample(n, max_images, replace = replace)
     pooled <- x$comm[order, , drop = FALSE]
     for (j in seq_len(ncol(pooled))) pooled[, j] <- cumsum(pooled[, j])
     pooled <- pooled[steps, , drop = FALSE]
-    pooled_area <- cumsum(tile_area[order])[steps]
+    pooled_area <- cumsum(image_area[order])[steps]
 
     area[r, ] <- pooled_area
     individuals[r, ] <- rowSums(pooled)
@@ -229,20 +224,20 @@ print.su_curve <- function(x, ...) {
   cat("Sample unit size curves\n")
   cat("Data: ", attr(x, "data"), "\n", sep = "")
   cat("Data citation: ", attr(x, "data_citation"), "\n", sep = "")
-  cat(s$times, " random orders of tiles, ",
+  cat(s$times, " random orders of images, ",
       if (s$replace) "with" else "without", " replacement. ",
       "Median and middle ", 100 * s$band, "% shown.\n", sep = "")
 
   # About 10 rows per metric, spread along the curve
-  steps <- unique(x$tiles)
+  steps <- unique(x$images)
   shown <- steps[unique(round(seq(1, length(steps), length.out = 10)))]
   for (name in unique(x$metric)) {
-    df <- as.data.frame(unclass(x[x$metric == name & x$tiles %in% shown, ]))
-    df <- df[c("tiles", "area", "individuals", "median", "lower", "upper")]
+    df <- as.data.frame(unclass(x[x$metric == name & x$images %in% shown, ]))
+    df <- df[c("images", "area", "individuals", "median", "lower", "upper")]
     df[-1] <- lapply(df[-1], signif, 4)
     attr(df, "settings") <- attr(df, "data") <- NULL
     attr(df, "data_citation") <- attr(df, "stratum") <- NULL
-    attr(df, "n_tiles") <- NULL
+    attr(df, "n_images") <- NULL
     cat("\n", name, "\n", sep = "")
     print(df, row.names = FALSE)
   }
@@ -252,23 +247,23 @@ print.su_curve <- function(x, ...) {
 #' Plot sample unit size curves
 #'
 #' Draws one panel per metric from [su_curve()]. The line is the median over
-#' the random orders of tiles and the shaded band holds the middle of them
+#' the random orders of images and the shaded band holds the middle of them
 #' (95% by default). A panel on the right lists the settings used, and the
 #' data citation is shown along the bottom.
 #'
 #' With `compare = TRUE` all the metrics are drawn in one panel instead, each
 #' as a percentage of its value at the last step. This shows which metrics
-#' settle quickly and which need more tiles.
+#' settle quickly and which need more images.
 #'
 #' The sample unit size can be shown as seabed area, number of individuals or
-#' number of tiles (images). Give one to use along the bottom, or two to add
+#' number of images. Give one to use along the bottom, or two to add
 #' the second along the top. The top axis is matched to the bottom one using
 #' the median curves, so it is a guide.
 #'
 #' @param x A `su_curve` object from [su_curve()].
 #' @param metrics Metrics to plot. Defaults to all of them.
 #' @param x_axis Size measures for the bottom axis and, optionally, the top
-#'   axis: `"area"`, `"individuals"` or `"tiles"`.
+#'   axis: `"area"`, `"individuals"` or `"images"`.
 #' @param compare Draw all the metrics in one panel, each as a percentage of
 #'   its value at the last step, to compare how quickly they settle.
 #' @param main Plot title.
@@ -287,11 +282,11 @@ print.su_curve <- function(x, ...) {
 #'
 #' plot(curves)
 #'
-#' # Number of tiles along the bottom and seabed area along the top
-#' plot(curves, x_axis = c("tiles", "area"))
+#' # Number of images along the bottom and seabed area along the top
+#' plot(curves, x_axis = c("images", "area"))
 #'
 #' # Which metric settles first?
-#' plot(curves, compare = TRUE, x_axis = "tiles")
+#' plot(curves, compare = TRUE, x_axis = "images")
 #' @export
 plot.su_curve <- function(x, metrics = NULL,
                           x_axis = c("area", "individuals"), compare = FALSE,
@@ -299,11 +294,11 @@ plot.su_curve <- function(x, metrics = NULL,
                             "Sample unit size curves",
                           settings_panel = TRUE, ...) {
   s <- attr(x, "settings")
-  sizes <- c("area", "individuals", "tiles")
+  sizes <- c("area", "individuals", "images")
   if (!is.character(x_axis) || !length(x_axis) %in% 1:2 ||
       !all(x_axis %in% sizes) || anyDuplicated(x_axis)) {
     stop("`x_axis` must be one or two of \"area\", \"individuals\" and ",
-         "\"tiles\".", call. = FALSE)
+         "\"images\".", call. = FALSE)
   }
   if (is.null(metrics)) metrics <- unique(x$metric)
   missing <- setdiff(metrics, x$metric)
@@ -331,10 +326,10 @@ plot.su_curve <- function(x, metrics = NULL,
   if (settings_panel) {
     items <- c(
       "Stratum" = attr(x, "stratum"),
-      "Tiles in data" = attr(x, "n_tiles"),
+      "Images in data" = attr(x, "n_images"),
       "Random orders" = s$times,
       "Replacement" = if (s$replace) "yes" else "no",
-      "Tiles drawn" = paste("up to", s$max_tiles),
+      "Images drawn" = paste("up to", s$max_images),
       "Line" = if (compare) "median, as % of its value at the last step" else
         "median"
     )
@@ -434,7 +429,7 @@ size_label <- function(size) {
   switch(size,
     area = "Seabed area (m\u00b2)",
     individuals = "Individuals",
-    tiles = "Tiles (images)"
+    images = "Images"
   )
 }
 

@@ -9,18 +9,18 @@ trying out the package. None of the values come from a real survey.
 }
 \details{
 \itemize{
-\item \code{synthetic_counts.csv}: one row per tile and one column per taxon. The
-first column holds the tile ids.
-\item \code{synthetic_metadata.csv}: one row per tile, with columns \code{FileName}
-(tile id), \code{Substratum}, \code{Habitat}, \code{Latitude}, \code{Longitude} and
+\item \code{synthetic_counts.csv}: one row per image and one column per taxon. The
+first column holds the image ids.
+\item \code{synthetic_metadata.csv}: one row per image, with columns \code{FileName}
+(image id), \code{Substratum}, \code{Habitat}, \code{Latitude}, \code{Longitude} and
 \code{Area_seabed_m2}.
 }
 
-There are 600 tiles of about 7 m² each and 40 taxa. The tiles are spread
+There are 600 images of about 7 m² each and 40 taxa. The images are spread
 over 7 substrata grouped into 4 habitats. Hard substrata have many more
-individuals per tile than sand and coarse ones, and each taxon is more
+individuals per image than sand and coarse ones, and each taxon is more
 common in one habitat. A few taxa are common and most are rare. The
-numbers of individuals per tile in each substratum are set to roughly
+numbers of individuals per image in each substratum are set to roughly
 match those published in Table 1 of Benoist et al. (2019). Coordinates are
 placed near 0° N 0° E so they cannot be mistaken for a real site.
 
