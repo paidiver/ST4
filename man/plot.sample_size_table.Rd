@@ -6,6 +6,8 @@
 \usage{
 \method{plot}{sample_size_table}(
   x,
+  breaks = c(3, 5, 10, 20, 50, 100),
+  col = NULL,
   max_shown = NULL,
   main = "Sample units required per stratum",
   strata = NULL,
@@ -16,6 +18,15 @@
 }
 \arguments{
 \item{x}{A \code{sample_size_table} object from \code{\link[=sample_size_table]{sample_size_table()}}.}
+
+\item{breaks}{Upper end of each colour bin, in SUs needed, from low to
+high. Cells above the last break get one more bin. The default gives
+the bins 3, 4-5, 6-10, 11-20, 21-50, 51-100 and over 100. Use
+\code{breaks = 10} for the split of Durden et al. (2016): 10 or fewer
+against more than 10.}
+
+\item{col}{Colours for the bins, one more than the number of \code{breaks}.
+Shades of blue by default.}
 
 \item{max_shown}{Cells needing more than this are greyed out instead of
 coloured. Durden et al. (2016) grey out cells above 10. By default no
@@ -44,7 +55,9 @@ still worked out and shown in the panel, but no cell is outlined.}
 \description{
 Draws a \code{\link[=sample_size_table]{sample_size_table()}} as a heatmap with CV down the side and delta
 along the top, laid out like Table 1 of Durden et al. (2016). Each cell
-shows the number of SUs required per stratum. Darker cells need more SUs.
+shows the number of SUs required per stratum. Cells are coloured by bins
+of SUs needed, darker for more, so a table running from 3 to several
+hundred SUs still shows clear steps.
 }
 \details{
 A panel on the right lists the settings the table was made with, so a saved
@@ -52,6 +65,9 @@ plot explains itself.
 }
 \examples{
 plot(sample_size_table(), max_shown = 10)
+
+# Durden's split: 10 or fewer SUs against more than 10
+plot(sample_size_table(), breaks = 10, col = c("lightblue", "grey60"))
 
 # Name the strata you plan to compare
 plot(sample_size_table(), strata = c("sand", "hard"))

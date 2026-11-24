@@ -2,12 +2,21 @@
 #'
 #' Draws a [sample_size_table()] as a heatmap with CV down the side and delta
 #' along the top, laid out like Table 1 of Durden et al. (2016). Each cell
-#' shows the number of SUs required per stratum. Darker cells need more SUs.
+#' shows the number of SUs required per stratum. Cells are coloured by bins
+#' of SUs needed, darker for more, so a table running from 3 to several
+#' hundred SUs still shows clear steps.
 #'
 #' A panel on the right lists the settings the table was made with, so a saved
 #' plot explains itself.
 #'
 #' @param x A `sample_size_table` object from [sample_size_table()].
+#' @param breaks Upper end of each colour bin, in SUs needed, from low to
+#'   high. Cells above the last break get one more bin. The default gives
+#'   the bins 3, 4-5, 6-10, 11-20, 21-50, 51-100 and over 100. Use
+#'   `breaks = 10` for the split of Durden et al. (2016): 10 or fewer
+#'   against more than 10.
+#' @param col Colours for the bins, one more than the number of `breaks`.
+#'   Shades of blue by default.
 #' @param max_shown Cells needing more than this are greyed out instead of
 #'   coloured. Durden et al. (2016) grey out cells above 10. By default no
 #'   cells are greyed out, unless `max_n` is set and cells need more.
@@ -29,13 +38,17 @@
 #' @examples
 #' plot(sample_size_table(), max_shown = 10)
 #'
+#' # Durden's split: 10 or fewer SUs against more than 10
+#' plot(sample_size_table(), breaks = 10, col = c("lightblue", "grey60"))
+#'
 #' # Name the strata you plan to compare
 #' plot(sample_size_table(), strata = c("sand", "hard"))
 #'
 #' # Mark your guessed CV and the difference you want to detect
 #' plot(sample_size_table(), highlight = c(cv = 20, delta = 40))
 #' @export
-plot.sample_size_table <- function(x, max_shown = NULL,
+plot.sample_size_table <- function(x, breaks = c(3, 5, 10, 20, 50, 100),
+                                   col = NULL, max_shown = NULL,
                                    main = "Sample units required per stratum",
                                    strata = NULL, highlight = NULL,
                                    settings_panel = TRUE, ...) {
@@ -57,6 +70,20 @@ plot.sample_size_table <- function(x, max_shown = NULL,
            call. = FALSE)
     }
   }
+  if (!is.numeric(breaks) || length(breaks) == 0 || anyNA(breaks) ||
+      any(breaks < 1) || any(breaks != round(breaks)) ||
+      is.unsorted(breaks, strictly = TRUE)) {
+    stop("`breaks` must be whole numbers of 1 or more, from low to high.",
+         call. = FALSE)
+  }
+  n_bins <- length(breaks) + 1
+  if (is.null(col)) {
+    col <- grDevices::hcl.colors(n_bins + 1, "Blues 3", rev = TRUE)[-1]
+  }
+  if (length(col) != n_bins) {
+    stop("`col` must give ", n_bins, " colours, one more than the number of ",
+         "`breaks`.", call. = FALSE)
+  }
   m <- unclass(x)
   attr(m, "settings") <- NULL
   cv <- rownames(m)
@@ -70,12 +97,12 @@ plot.sample_size_table <- function(x, max_shown = NULL,
   shown <- m
   shown[greyed] <- NA
 
-  # image() puts the first row at the bottom, so flip the rows to read like the
-  # paper with the smallest CV at the top
-  z <- t(shown[rev(seq_along(cv)), , drop = FALSE])
-  lo <- if (all(greyed)) 0 else min(shown, na.rm = TRUE)
-  hi <- if (all(greyed)) 0 else max(shown, na.rm = TRUE)
-  colours <- grDevices::hcl.colors(hi - lo + 1, "Blues 3", rev = TRUE)
+  # Bin of each cell: 1 for up to breaks[1], and so on, with n_bins for
+  # cells above the last break. image() puts the first row at the bottom,
+  # so flip the rows to read like the paper with the smallest CV at the top.
+  bin <- matrix(findInterval(shown, breaks, left.open = TRUE) + 1,
+                nrow = nrow(shown))
+  z <- t(bin[rev(seq_along(cv)), , drop = FALSE])
 
   # Where the highlighted CV and delta sit in the grid (NA if not there).
   # Rows are flipped, so the smallest CV is at the top.
@@ -95,11 +122,11 @@ plot.sample_size_table <- function(x, max_shown = NULL,
     )
   }
 
-  # Cell labels, with white text on the darker half of the colours
+  # Cell labels, with white text on dark colours
   labels <- t(m[rev(seq_along(cv)), , drop = FALSE])
   labels <- ifelse(is.na(labels), paste0(">", s$max_n), labels)
-  level <- (z - lo) / max(1, hi - lo)
-  text_col <- ifelse(!is.na(level) & level > 0.5, "white", "black")
+  dark <- colSums(grDevices::col2rgb(col) * c(0.299, 0.587, 0.114)) < 140
+  text_col <- ifelse(!is.na(z) & dark[pmax(1, z)], "white", "black")
 
   items <- NULL
   key <- NULL
@@ -116,10 +143,17 @@ plot.sample_size_table <- function(x, max_shown = NULL,
       "Greyed out" = if (is.null(max_shown)) "none" else paste0("> ", max_shown)
     )
     if (!is.null(highlight)) items <- c(items, "Highlighted" = highlight_text)
-    if (!all(greyed)) key <- list(colours = colours, low = lo, high = hi)
+    # Bins starting above max_shown are always greyed out, so leave them out
+    lower <- c(1, utils::head(breaks, -1) + 1, breaks[length(breaks)] + 1)
+    used <- if (is.null(max_shown)) seq_len(n_bins) else
+      which(lower <= max_shown)
+    key <- list(title = "SUs needed", labels = bin_labels(breaks)[used],
+                colours = col[used], type = "box")
     if (any(greyed)) {
-      key$grey <- if (is.null(max_shown)) paste0("> ", s$max_n) else
-        paste0("> ", max_shown)
+      key$labels <- c(key$labels, paste0(
+        "Grey: >", if (is.null(max_shown)) s$max_n else max_shown
+      ))
+      key$colours <- c(key$colours, "grey85")
     }
   }
 
@@ -137,14 +171,14 @@ plot.sample_size_table <- function(x, max_shown = NULL,
   graphics::plot.new()
   grDevices::recordGraphics(
     draw_sample_size_plot(
-      z = z, cv = cv, delta = delta, greyed = greyed, colours = colours,
-      lo = lo, hi = hi, labels = labels, text_col = text_col,
+      z = z, cv = cv, delta = delta, greyed = greyed, colours = col,
+      labels = labels, text_col = text_col,
       hl_col = hl_col, hl_row = hl_row, hl_y = hl_y, main = main,
       items = items, key = key,
       highlighted = !is.null(highlight), image_args = dots
     ),
-    list(z = z, cv = cv, delta = delta, greyed = greyed, colours = colours,
-         lo = lo, hi = hi, labels = labels, text_col = text_col,
+    list(z = z, cv = cv, delta = delta, greyed = greyed, col = col,
+         labels = labels, text_col = text_col,
          hl_col = hl_col, hl_row = hl_row, hl_y = hl_y, main = main,
          items = items, key = key,
          highlight = highlight, dots = dots),
@@ -156,8 +190,7 @@ plot.sample_size_table <- function(x, max_shown = NULL,
 
 # Draws the whole heatmap figure. Everything that depends on the window size
 # is worked out here, so it is right every time the plot is redrawn.
-draw_sample_size_plot <- function(z, cv, delta, greyed, colours, lo, hi,
-                                  labels, text_col, hl_col, hl_row, hl_y,
+draw_sample_size_plot <- function(z, cv, delta, greyed, colours, labels, text_col, hl_col, hl_row, hl_y,
                                   main, items, key,
                                   highlighted, image_args) {
   # Outer margin at the bottom for the footer
@@ -183,7 +216,8 @@ draw_sample_size_plot <- function(z, cv, delta, greyed, colours, lo, hi,
   if (!all(greyed)) {
     do.call(graphics::image,
             c(list(seq_along(delta), seq_along(cv), z, col = colours,
-                   zlim = c(lo, hi), add = TRUE), image_args))
+                   zlim = c(0.5, length(colours) + 0.5), add = TRUE),
+              image_args))
   }
   graphics::title(ylab = "CV (%)")
 
@@ -237,10 +271,9 @@ highlight_colour <- "#E8590C"
 # Draws a boxed list of run settings filling the current plot region, like a
 # legend. `items` is a named vector: names are labels, values are settings.
 # Items named in `highlight` get their label in the highlight colour.
-# `key`, if given, is drawn at the bottom. It is either a list with
-# `colours`, `low` and `high` (and optionally `grey`, the label for greyed-out
-# cells), drawn as a colour bar, or a list with `labels`, `colours` and `type`
-# drawn as a key of lines or boxes (see draw_entry_key()).
+# `key`, if given, is drawn at the bottom: a list with `labels`, `colours`,
+# `type` and optionally `title`, drawn as a key of lines or boxes (see
+# draw_entry_key()).
 draw_settings_panel <- function(items, title = "Run settings",
                                 highlight = NULL, key = NULL) {
   # Small top margin so the panel runs from the top of the title down to the
@@ -288,52 +321,8 @@ draw_settings_panel <- function(items, title = "Run settings",
     y <- y - line_h * 1.15
   }
 
-  if (!is.null(key$labels)) {
-    draw_entry_key(key, text_line)
-  } else if (!is.null(key)) {
-    draw_colour_key(key, text_line)
-  }
+  if (!is.null(key)) draw_entry_key(key, text_line)
   invisible()
-}
-
-# Colour bar for the settings panel: fewest SUs on the left, most on the
-# right, with a grey swatch for greyed-out cells if there are any
-# Positions are in lines of text (`text_line`, in panel units), so the key
-# keeps its shape in any window size
-draw_colour_key <- function(key, text_line) {
-  x0 <- 0.06
-  x1 <- 0.94
-  bar_y <- 1.7 * text_line
-  bar_h <- 0.78 * text_line
-  # No colour bar if every cell is greyed out, only the grey swatch
-  if (!is.null(key$colours)) {
-    draw_colour_bar(key, x0, x1, bar_y, bar_h, text_line)
-  }
-
-  if (!is.null(key$grey)) {
-    sw_y <- bar_y + bar_h + 1.55 * text_line
-    graphics::rect(x0, sw_y, x0 + 0.08, sw_y + bar_h, col = "grey85",
-                   border = "grey60")
-    graphics::text(x0 + 0.11, sw_y + bar_h / 2,
-                   paste0("Greyed out (", key$grey, ")"),
-                   adj = c(0, 0.5), cex = 0.7)
-  }
-}
-
-draw_colour_bar <- function(key, x0, x1, bar_y, bar_h, text_line) {
-  graphics::text(x0, bar_y + bar_h + 0.65 * text_line, "SUs needed",
-                 adj = c(0, 0.5),
-                 cex = 0.7, col = "grey35")
-  n <- length(key$colours)
-  edges <- seq(x0, x1, length.out = n + 1)
-  # Segment borders in their own colour, so no gaps show between them
-  graphics::rect(edges[-(n + 1)], bar_y, edges[-1], bar_y + bar_h,
-                 col = key$colours, border = key$colours, lwd = 0.5)
-  graphics::rect(x0, bar_y, x1, bar_y + bar_h, border = "grey60")
-  graphics::text(x1, bar_y - 0.57 * text_line, key$high, adj = c(1, 0.5),
-                 cex = 0.7)
-  graphics::text(x0, bar_y - 0.57 * text_line, key$low, adj = c(0, 0.5),
-                 cex = 0.7)
 }
 
 # Axis labels with one optional label (at position `hl`) in bold orange
@@ -424,4 +413,14 @@ window_scale <- function() {
   din <- graphics::par("din")
   scale <- min(din[1] / 9, din[2] / 5.75)
   min(max(scale, 0.75), 1.6)
+}
+
+# Labels for the colour bins: "3", "4-5", ..., ">100". The first bin starts
+# at 1, so it is "up to" its break unless that is 1.
+bin_labels <- function(breaks) {
+  lower <- c(1, utils::head(breaks, -1) + 1)
+  middle <- ifelse(lower == breaks, breaks,
+                   paste0(lower, "-", breaks))
+  middle[1] <- if (breaks[1] <= 3) breaks[1] else paste0("up to ", breaks[1])
+  c(middle, paste0(">", breaks[length(breaks)]))
 }

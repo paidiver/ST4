@@ -113,13 +113,15 @@ panel_background <- function(h = NULL, v = NULL) {
 }
 
 # Key of lines or filled boxes for the settings panel, one entry per line of
-# text from the bottom up. `key` is a list with `labels`, `colours` and
-# `type` ("line" or "box").
+# text, filled down the first column then the second. `key` is a list with
+# `labels`, `colours`, `type` ("line" or "box") and optionally a `title`
+# drawn above the entries. More than 4 entries go in two columns.
 draw_entry_key <- function(key, text_line) {
-  x0 <- 0.06
   n <- length(key$labels)
+  rows <- key_rows(key)
   for (i in seq_len(n)) {
-    y <- (1.3 + 1.3 * (n - i)) * text_line
+    x0 <- if (i > rows) 0.5 else 0.06
+    y <- (1.3 + 1.3 * (rows - 1 - (i - 1) %% rows)) * text_line
     if (identical(key$type, "line")) {
       graphics::segments(x0, y, x0 + 0.12, y, col = key$colours[i], lwd = 3)
     } else {
@@ -129,13 +131,22 @@ draw_entry_key <- function(key, text_line) {
     }
     graphics::text(x0 + 0.16, y, key$labels[i], adj = c(0, 0.5), cex = 0.7)
   }
+  if (!is.null(key$title)) {
+    graphics::text(0.06, (1.3 + 1.3 * rows) * text_line, key$title,
+                   adj = c(0, 0.5), cex = 0.7, col = "grey35")
+  }
 }
 
 # Height of a key in lines of text, so the settings panel leaves room for it
 key_lines <- function(key) {
   if (is.null(key)) return(0)
-  if (!is.null(key$labels)) return(1.2 + 1.3 * length(key$labels))
-  if (is.null(key$grey)) 3.9 else 5.4
+  1.2 + 1.3 * key_rows(key) + if (is.null(key$title)) 0 else 1.3
+}
+
+# Rows the key takes: one column up to 4 entries, two columns above that
+key_rows <- function(key) {
+  n <- length(key$labels)
+  if (n > 4) ceiling(n / 2) else n
 }
 
 # Draws a figure with draw_figure(), keeping the user's graphics settings.
