@@ -140,3 +140,24 @@ test_that("plot redraws correctly when a viewer replays it at a new size", {
   on.exit(grDevices::dev.off())
   expect_no_error(grDevices::replayPlot(recorded))
 })
+
+test_that("bin labels follow the breaks", {
+  # Default: 3, 4-5, 6-10, 11-20, 21-50, 51-100, >100
+  expect_equal(bin_labels(c(3, 5, 10, 20, 50, 100)),
+               c("3", "4-5", "6-10", "11-20", "21-50", "51-100", ">100"))
+  # Durden's split: up to 10, >10
+  expect_equal(bin_labels(10), c("up to 10", ">10"))
+  # A one-value bin is shown as that value
+  expect_equal(bin_labels(c(2, 3, 6)), c("2", "3", "4-6", ">6"))
+})
+
+test_that("plot takes breaks and colours, and checks them", {
+  tab <- sample_size_table()
+  expect_no_error(plot(tab, breaks = 10, col = c("lightblue", "grey60")))
+  expect_no_error(plot(tab, breaks = c(5, 20), max_shown = 10))
+  expect_error(plot(tab, breaks = c(10, 5)), "from low to high")
+  expect_error(plot(tab, breaks = 2.5), "whole numbers")
+  # 2 breaks need 3 colours
+  expect_error(plot(tab, breaks = c(5, 10), col = c("red", "blue")),
+               "3 colours")
+})
