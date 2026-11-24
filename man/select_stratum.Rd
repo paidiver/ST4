@@ -15,7 +15,8 @@ select_stratum(x, stratum, by = "Substratum")
 }
 \value{
 An \code{su_images} object holding only the images in \code{stratum}. The chosen
-column and stratum are kept in \code{x$settings$by} and \code{x$settings$stratum}.
+column and stratum are kept in \code{x$settings$by} and \code{x$settings$stratum},
+and the number of strata in that column in \code{x$settings$n_strata}.
 }
 \description{
 Keeps only the images in one stratum, such as one substratum or one habitat.

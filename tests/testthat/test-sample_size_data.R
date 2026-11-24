@@ -115,3 +115,55 @@ test_that("works on the synthetic data", {
   expect_equal(nrow(out), 2)
   expect_true(all(out$n_delta_40 >= 2, na.rm = TRUE))
 })
+
+# Three substrata, for counting the strata in the data
+strata_cv_data <- function() {
+  counts <- data.frame(
+    image = paste0("t", 1:6),
+    a = c(3, 0, 1, 5, 2, 2),
+    b = c(1, 2, 1, 0, 0, 1)
+  )
+  metadata <- data.frame(
+    FileName = paste0("t", 1:6),
+    Area_seabed_m2 = rep(5, 6),
+    Substratum = c("sand", "sand", "sand", "sand", "hard", "mud")
+  )
+  read_counts(counts, metadata)
+}
+
+test_that("the number of strata comes from the data", {
+  x <- select_stratum(strata_cv_data(), "sand")
+  # sand, hard and mud: 3 strata
+  expect_equal(x$settings$n_strata, 3)
+  out <- sample_size_data(x, delta = 40)
+  expect_equal(attr(out, "settings")$n_strata, 3)
+  expect_equal(out$n_delta_40, sample_size(out$cv, 40, n_strata = 3))
+  expect_output(print(out), "3 strata compared \\(from the data\\)")
+})
+
+test_that("n_strata set by the user wins over the data", {
+  x <- select_stratum(strata_cv_data(), "sand")
+  out <- sample_size_data(x, delta = 40, n_strata = 2)
+  expect_equal(attr(out, "settings")$n_strata, 2)
+  expect_output(print(out), "2 strata compared, alpha")
+  out <- sample_size_data(x, delta = 40,
+                          control = sample_size_control(n_strata = 4))
+  expect_equal(attr(out, "settings")$n_strata, 4)
+})
+
+test_that("the n_strata setting is used without a stratum", {
+  # No stratum picked, so the number of strata is not known
+  out <- sample_size_data(cv_data(), delta = 40)
+  expect_equal(attr(out, "settings")$n_strata, 2)
+  expect_false(attr(out, "n_strata_from_data"))
+})
+
+test_that("composite SUs keep the number of strata", {
+  x <- select_stratum(strata_cv_data(), "sand")
+  sus <- build_sample_units(x, type = "images", size = 2, seed = 1)
+  expect_equal(sus$settings$n_strata, 3)
+})
+
+test_that("delta must be at least 0.1", {
+  expect_error(sample_size_data(cv_data(), delta = 0), "at least 0.1")
+})

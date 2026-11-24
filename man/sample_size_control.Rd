@@ -4,14 +4,27 @@
 \alias{sample_size_control}
 \title{Settings for the number of sample units}
 \usage{
-sample_size_control(alpha = 0.05, power = 0.9, n_strata = 2, max_n = Inf, ...)
+sample_size_control(
+  alpha = 0.05,
+  power = 0.95,
+  n_strata = 2,
+  min_n = 3,
+  max_n = Inf,
+  ...
+)
 }
 \arguments{
 \item{alpha}{Significance level, two-tailed. Between 0 and 1.}
 
-\item{power}{Power of the test, P. Between 0 and 1.}
+\item{power}{Power of the test, P. Between 0 and 1. Durden et al. (2016)
+Table 1 uses 0.9.}
 
-\item{n_strata}{Number of strata (groups) being compared. At least 2.}
+\item{n_strata}{Number of strata (groups) being compared. At least 2.
+\code{\link[=sample_size_data]{sample_size_data()}} uses the number of strata in the data instead,
+unless this is set.}
+
+\item{min_n}{Smallest number of sample units to return. At least 2.
+Durden et al. (2016) Table 1 uses 2.}
 
 \item{max_n}{Largest number of sample units to try. No limit by default.
 If set, cells needing more are returned as \code{NA}.}

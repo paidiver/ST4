@@ -41,7 +41,8 @@ delta      <- 40
 
 # The CVs (%) and deltas (%) to show in the table and heatmap. Your guessed CV
 # and delta should be in these lists, so they can be outlined on the heatmap.
-# Leave both out of sample_size_table() to get Table 1 of Durden et al. (2016).
+# Leave both out of sample_size_table() and set power = 0.9 and min_n = 2 to
+# get Table 1 of Durden et al. (2016).
 table_cv    <- seq(10, 30, 5)
 table_delta <- c(20, 30, 40, 80, 100)
 

@@ -24,7 +24,7 @@ and/or named functions. Defaults to richness.}
 
 \item{control}{Settings from \code{\link[=sample_size_control]{sample_size_control()}}: the significance
 level \eqn{\alpha}, the power \eqn{P}, the number of strata \eqn{a} and
-the largest n to try. Can also be a list, such as \code{list(alpha = 0.1)}.
+the smallest and largest n. Can also be a list, such as \code{list(alpha = 0.1)}.
 Durden et al. (2016) use P for both power and significance in the text;
 here they are separate.}
 
@@ -50,6 +50,11 @@ that needs the most, which is flagged as the worst case.
 
 The CV, and so the answer, depends on the size of the units in \code{x}. Use
 data at the sample unit size you plan to survey with.
+
+The number of strata compared is the number in the column given to
+\code{\link[=select_stratum]{select_stratum()}}, counted before the stratum was picked. Set \code{n_strata}
+to use a different number. If the data has fewer than 2 strata, the
+\code{n_strata} setting (2 by default) is used.
 }
 \examples{
 counts_file <- system.file("extdata", "synthetic_counts.csv", package = "ST4")

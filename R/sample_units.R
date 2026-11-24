@@ -165,6 +165,7 @@ build_sample_units <- function(x, control = sample_unit_control(),
                      kind = "su_composite")
   out$settings$by <- x$settings$by
   out$settings$stratum <- x$settings$stratum
+  out$settings$n_strata <- x$settings$n_strata
   out$settings$sample_units <- control
   out$settings$n_dropped <- nrow(x$comm) - length(used)
   out$settings$seed <- seed

@@ -6,6 +6,13 @@ check_positive <- function(x, name) {
   }
 }
 
+# Numbers of at least `min`, such as a CV or delta of at least 0.1%
+check_at_least <- function(x, name, min) {
+  if (!is.numeric(x) || length(x) == 0 || anyNA(x) || any(x < min)) {
+    stop("`", name, "` must be numbers of at least ", min, ".", call. = FALSE)
+  }
+}
+
 check_probability <- function(x, name) {
   if (!is.numeric(x) || length(x) != 1 || is.na(x) || x <= 0 || x >= 1) {
     stop("`", name, "` must be a single number between 0 and 1.", call. = FALSE)

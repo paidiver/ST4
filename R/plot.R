@@ -111,6 +111,7 @@ plot.sample_size_table <- function(x, max_shown = NULL,
         paste0(s$n_strata, ": ", paste(strata, collapse = ", ")),
       "Alpha" = s$alpha,
       "Power" = s$power,
+      "Min n" = s$min_n,
       "Max n" = if (is.infinite(s$max_n)) "no limit" else s$max_n,
       "Greyed out" = if (is.null(max_shown)) "none" else paste0("> ", max_shown)
     )
@@ -198,8 +199,8 @@ draw_sample_size_plot <- function(z, cv, delta, greyed, colours, lo, hi,
   }
 
   # Axis labels, with the highlighted CV and delta in bold orange
-  draw_axis_labels(3, seq_along(delta), delta, hl_col)
-  draw_axis_labels(2, seq_along(cv), rev(cv),
+  draw_axis_labels(3, seq_along(delta), paste0(delta, "%"), hl_col)
+  draw_axis_labels(2, seq_along(cv), paste0(rev(cv), "%"),
                    if (is.na(hl_row)) NA else hl_y, las = 1)
   # mtext() sizes are absolute, so scale them with the window like other text
   graphics::mtext("Delta (%)", side = 3, line = 2.2,

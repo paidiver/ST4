@@ -15,16 +15,20 @@
 #' composite SUs from [build_sample_units()]. See [ST4-package] for the terms.
 #'
 #' n appears on both sides (through \eqn{v}), so it is found by stepping n up
-#' until the inequality holds. When the power is 0.5 or more, the search
-#' starts from the same formula with normal (z) values in place of t values.
-#' Those t values are always larger than the z values, so no smaller n can
-#' work and the result is the same as starting from n = 2, only faster.
+#' from `min_n` (3 by default) until the inequality holds. When the power is
+#' 0.5 or more, the search starts from the same formula with normal (z)
+#' values in place of t values. Those t values are always larger than the z
+#' values, so no smaller n can work and the result is the same as starting
+#' from `min_n`, only faster.
 #'
-#' @param cv Coefficient of variation of the metric, in %.
-#' @param delta Smallest true difference to detect, in % of the mean.
+#' @param cv Coefficient of variation of the metric, in %. At least 0.1.
+#'   50 by default, for when there is no data yet.
+#' @param delta Smallest true difference to detect, in % of the mean. At
+#'   least 0.1. It can be over 100, for differences larger than the mean.
+#'   There is no default.
 #' @param control Settings from [sample_size_control()]: the significance
 #'   level \eqn{\alpha}, the power \eqn{P}, the number of strata \eqn{a} and
-#'   the largest n to try. Can also be a list, such as `list(alpha = 0.1)`.
+#'   the smallest and largest n. Can also be a list, such as `list(alpha = 0.1)`.
 #'   Durden et al. (2016) use P for both power and significance in the text;
 #'   here they are separate.
 #' @param ... Settings to change, given straight to the function, such as
@@ -56,18 +60,32 @@
 #' sample_size(20, 40, control = list(alpha = 0.1))
 #' sample_size(20, 40, alpha = 0.1)
 #' @export
-sample_size <- function(cv, delta, control = sample_size_control(), ...) {
-  check_positive(cv, "cv")
-  check_positive(delta, "delta")
+sample_size <- function(cv = 50, delta, control = sample_size_control(),
+                        ...) {
+  if (missing(delta)) {
+    stop("`delta` is needed: the smallest difference to detect, in % of the ",
+         "mean. There is no default.", call. = FALSE)
+  }
+  check_at_least(cv, "cv", 0.1)
+  check_at_least(delta, "delta", 0.1)
   ctl <- resolve_control(control, list(...), sample_size_control)
+  n_required(cv, delta, ctl)
+}
 
+# Eqn 1 without the input checks, for sample_size() and sample_size_data().
+# CVs from survey data can be below 0.1%.
+n_required <- function(cv, delta, ctl) {
   # Lower bound for n: Eqn 1 with z values. Above the median (probability 0.5)
   # t values are larger than z values, so for power >= 0.5 no smaller n can
-  # work. Below that the bound does not hold, so start from 2.
+  # work. Below that the bound does not hold, so start from min_n.
   z <- stats::qnorm(1 - ctl$alpha / 2) + stats::qnorm(ctl$power)
 
   one <- function(cv, delta) {
-    n <- if (ctl$power >= 0.5) max(2, floor(2 * (cv / delta)^2 * z^2)) else 2
+    n <- if (ctl$power >= 0.5) {
+      max(ctl$min_n, floor(2 * (cv / delta)^2 * z^2))
+    } else {
+      ctl$min_n
+    }
     repeat {
       if (n > ctl$max_n) return(NA_integer_)
       v <- ctl$n_strata * (n - 1)
@@ -85,8 +103,9 @@ sample_size <- function(cv, delta, control = sample_size_control(), ...) {
 #' Table of sample units required
 #'
 #' Runs [sample_size()] for every combination of `cv` and `delta`. The
-#' defaults are the values used in Table 1 of Durden et al. (2016), so
-#' `sample_size_table()` with no arguments recreates that table.
+#' default `cv` and `delta` are the values used in Table 1 of Durden et al.
+#' (2016). That table used a power of 0.9 and allowed 2 sample units, so
+#' `sample_size_table(power = 0.9, min_n = 2)` recreates it.
 #'
 #' @inheritParams sample_size
 #' @param cv Coefficients of variation, in %. These become the table rows.
@@ -109,7 +128,7 @@ sample_size <- function(cv, delta, control = sample_size_control(), ...) {
 #'
 #' @examples
 #' # Recreate Durden et al. (2016) Table 1
-#' tab <- sample_size_table()
+#' tab <- sample_size_table(power = 0.9, min_n = 2)
 #' tab
 #' plot(tab, max_shown = 10)
 #'
@@ -137,11 +156,13 @@ print.sample_size_table <- function(x, ...) {
   cat("From Durden et al. (2016) Eqn 1 for set CVs, not from survey data\n")
   cat(s$n_strata, " strata compared, alpha ", s$alpha, ", power ", s$power,
       "\n", sep = "")
-  cat("Rows are CV %. Columns are delta %.\n\n")
+  cat("Each cell is the number of SUs needed for that CV and delta.\n\n")
 
   m <- unclass(x)
   attr(m, "settings") <- NULL
   out <- ifelse(is.na(m), paste0(">", s$max_n), m) # keeps the dimnames
+  dimnames(out) <- list("CV" = paste0(rownames(m), "%"),
+                        "delta" = paste0(colnames(m), "%"))
   print(out, quote = FALSE, right = TRUE)
   invisible(x)
 }
@@ -158,6 +179,11 @@ print.sample_size_table <- function(x, ...) {
 #'
 #' The CV, and so the answer, depends on the size of the units in `x`. Use
 #' data at the sample unit size you plan to survey with.
+#'
+#' The number of strata compared is the number in the column given to
+#' [select_stratum()], counted before the stratum was picked. Set `n_strata`
+#' to use a different number. If the data has fewer than 2 strata, the
+#' `n_strata` setting (2 by default) is used.
 #'
 #' @inheritParams sample_size
 #' @inheritParams su_metrics
@@ -182,18 +208,23 @@ print.sample_size_table <- function(x, ...) {
 #' @export
 sample_size_data <- function(x, delta, metrics = "richness",
                              control = sample_size_control(), ...) {
-  check_positive(delta, "delta")
+  check_at_least(delta, "delta", 0.1)
   ctl <- resolve_control(control, list(...), sample_size_control)
+  # Number of strata from the data, unless the user set it
+  from_data <- !"n_strata" %in% attr(ctl, "changed") &&
+    isTRUE(x$settings$n_strata >= 2)
+  if (from_data) ctl$n_strata <- x$settings$n_strata
   out <- metric_cv(x, metrics)
 
   for (d in delta) {
     n <- rep(NA_integer_, nrow(out))
     ok <- !is.na(out$cv) & out$cv > 0
-    if (any(ok)) n[ok] <- sample_size(out$cv[ok], d, control = ctl)
+    if (any(ok)) n[ok] <- n_required(out$cv[ok], d, ctl)
     out[[paste0("n_delta_", d)]] <- n
   }
 
-  structure(out, settings = ctl, delta = delta, data = attr(out, "data"),
+  structure(out, settings = ctl, delta = delta,
+            n_strata_from_data = from_data, data = attr(out, "data"),
             data_citation = attr(out, "data_citation"),
             n_total = attr(out, "n_total"),
             class = c("sample_size_data", "data.frame"))
@@ -206,8 +237,9 @@ print.sample_size_data <- function(x, ...) {
   cat("Sample units required per stratum, from survey data\n")
   cat("Data: ", attr(x, "data"), "\n", sep = "")
   cat("Data citation: ", attr(x, "data_citation"), "\n", sep = "")
-  cat(s$n_strata, " strata compared, alpha ", s$alpha, ", power ", s$power,
-      "\n\n", sep = "")
+  cat(s$n_strata, " strata compared",
+      if (isTRUE(attr(x, "n_strata_from_data"))) " (from the data)",
+      ", alpha ", s$alpha, ", power ", s$power, "\n\n", sep = "")
 
   df <- as.data.frame(unclass(x), stringsAsFactors = FALSE)
   attr(df, "settings") <- NULL
@@ -215,6 +247,7 @@ print.sample_size_data <- function(x, ...) {
   attr(df, "data") <- NULL
   attr(df, "data_citation") <- NULL
   attr(df, "n_total") <- NULL
+  attr(df, "n_strata_from_data") <- NULL
   df$mean <- signif(df$mean, 4)
   df$sd <- signif(df$sd, 4)
   df$cv <- round(df$cv, 1)
