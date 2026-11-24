@@ -16,8 +16,13 @@
 #' default.
 #'
 #' @param alpha Significance level, two-tailed. Between 0 and 1.
-#' @param power Power of the test, P. Between 0 and 1.
+#' @param power Power of the test, P. Between 0 and 1. Durden et al. (2016)
+#'   Table 1 uses 0.9.
 #' @param n_strata Number of strata (groups) being compared. At least 2.
+#'   [sample_size_data()] uses the number of strata in the data instead,
+#'   unless this is set.
+#' @param min_n Smallest number of sample units to return. At least 2.
+#'   Durden et al. (2016) Table 1 uses 2.
 #' @param max_n Largest number of sample units to try. No limit by default.
 #'   If set, cells needing more are returned as `NA`.
 #' @param ... Not used. A misspelt setting name ends up here and stops with
@@ -33,18 +38,20 @@
 #' # Change one setting
 #' sample_size_control(alpha = 0.1)
 #' @export
-sample_size_control <- function(alpha = 0.05, power = 0.9, n_strata = 2,
-                                max_n = Inf, ...) {
+sample_size_control <- function(alpha = 0.05, power = 0.95, n_strata = 2,
+                                min_n = 3, max_n = Inf, ...) {
   check_unknown_settings(list(...),
                          names(formals(sample_size_control)),
                          "sample_size_control")
   check_probability(alpha, "alpha")
   check_probability(power, "power")
   check_count(n_strata, "n_strata", min = 2)
-  check_count(max_n, "max_n", min = 2)
+  check_count(min_n, "min_n", min = 2)
+  check_count(max_n, "max_n", min = min_n)
 
   new_control(
-    list(alpha = alpha, power = power, n_strata = n_strata, max_n = max_n),
+    list(alpha = alpha, power = power, n_strata = n_strata, min_n = min_n,
+         max_n = max_n),
     changed = setdiff(names(match.call())[-1], ""),
     class = "sample_size_control"
   )

@@ -1,15 +1,17 @@
 test_that("has the defaults", {
   ctl <- sample_size_control()
   expect_s3_class(ctl, "sample_size_control")
-  expect_equal(unclass(ctl)[c("alpha", "power", "n_strata", "max_n")],
-               list(alpha = 0.05, power = 0.9, n_strata = 2, max_n = Inf))
+  expect_equal(unclass(ctl)[c("alpha", "power", "n_strata", "min_n",
+                              "max_n")],
+               list(alpha = 0.05, power = 0.95, n_strata = 2, min_n = 3,
+                    max_n = Inf))
   expect_length(attr(ctl, "changed"), 0)
 })
 
 test_that("records which settings were changed", {
   ctl <- sample_size_control(alpha = 0.1, max_n = 50)
   expect_equal(ctl$alpha, 0.1)
-  expect_equal(ctl$power, 0.9)
+  expect_equal(ctl$power, 0.95)
   expect_setequal(attr(ctl, "changed"), c("alpha", "max_n"))
 })
 

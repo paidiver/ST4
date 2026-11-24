@@ -1,8 +1,9 @@
 # durden_table1, table1_cv and table1_delta are in helper-su-matrix.R
 
 test_that("reproduces Durden et al. (2016) Table 1", {
+  # Table 1 used power 0.9 and allowed 2 SUs
   grid <- expand.grid(cv = table1_cv, delta = table1_delta)
-  n <- sample_size(grid$cv, grid$delta)
+  n <- sample_size(grid$cv, grid$delta, power = 0.9, min_n = 2)
   got <- matrix(n, nrow = length(table1_cv))
 
   shown <- !is.na(durden_table1)
@@ -13,8 +14,8 @@ test_that("reproduces Durden et al. (2016) Table 1", {
 test_that("cases the original script got wrong", {
   # The original script gave 9 and 3 here, from a one-tailed alpha and from
   # using P as the significance level
-  expect_equal(sample_size(45, 79), 8L)
-  expect_equal(sample_size(45, 158), 4L)
+  expect_equal(sample_size(45, 79, power = 0.9, min_n = 2), 8L)
+  expect_equal(sample_size(45, 158, power = 0.9, min_n = 2), 4L)
 })
 
 test_that("recycles cv and delta", {
@@ -48,7 +49,8 @@ test_that("the faster search start gives the same answers as starting at 2", {
     for (cv in c(5, 20, 50)) {
       for (delta in c(10, 40, 224)) {
         expect_equal(
-          sample_size(cv, delta, alpha = s[1], power = s[2], n_strata = s[3]),
+          sample_size(cv, delta, alpha = s[1], power = s[2], n_strata = s[3],
+                      min_n = 2),
           from_two(cv, delta, s[1], s[2], s[3])
         )
       }
@@ -77,13 +79,46 @@ test_that("rejects bad input", {
 test_that("matches base R's exact two-sample t-test power calculation", {
   # power.t.test() solves for n with the noncentral t distribution. With the
   # CV as the standard deviation and delta as the difference (both in % of
-  # the mean), its n rounded up should match Eqn 1 for 2 strata.
-  for (cv in c(10, 20, 30, 50)) {
-    for (delta in c(20, 40, 79)) {
-      exact <- ceiling(stats::power.t.test(delta = delta, sd = cv,
-                                           sig.level = 0.05,
-                                           power = 0.9)$n)
-      expect_equal(sample_size(cv, delta), exact)
+  # the mean), its n rounded up should match Eqn 1 for 2 strata at power 0.9
+  # (Durden's setting). Eqn 1 is an approximation: at power 0.95 it can be 1
+  # higher than the exact n, never lower. min_n = 2 so small answers are not
+  # raised to the default of 3.
+  for (power in c(0.9, 0.95)) {
+    for (cv in c(10, 20, 30, 50)) {
+      for (delta in c(20, 40, 79)) {
+        exact <- max(2, ceiling(stats::power.t.test(delta = delta, sd = cv,
+                                                    sig.level = 0.05,
+                                                    power = power)$n))
+        n <- sample_size(cv, delta, power = power, min_n = 2)
+        if (power == 0.9) {
+          expect_equal(n, exact)
+        } else {
+          expect_true((n - exact) %in% 0:1)
+        }
+      }
     }
   }
+})
+
+test_that("never returns fewer than min_n SUs", {
+  # CV 5 and delta 224 needs 2 by Eqn 1 (Durden Table 1), raised to 3
+  expect_equal(sample_size(5, 224, power = 0.9, min_n = 2), 2L)
+  expect_equal(sample_size(5, 224, power = 0.9), 3L)
+  expect_equal(sample_size(5, 224, min_n = 5), 5L)
+  expect_error(sample_size(20, 40, min_n = 1), "min_n")
+  # max_n cannot be below min_n
+  expect_error(sample_size(20, 40, min_n = 5, max_n = 4), "max_n")
+})
+
+test_that("cv defaults to 50 and delta has no default", {
+  expect_equal(sample_size(delta = 40), sample_size(50, 40))
+  expect_error(sample_size(20), "`delta` is needed")
+})
+
+test_that("cv and delta must be at least 0.1, with no upper limit", {
+  expect_error(sample_size(0.05, 40), "`cv` must be numbers of at least 0.1")
+  expect_error(sample_size(20, 0.05), "`delta` must be numbers of at least 0.1")
+  expect_type(sample_size(0.1, 0.1), "integer")
+  # Differences and CVs over 100% are allowed
+  expect_false(is.na(sample_size(150, 224)))
 })

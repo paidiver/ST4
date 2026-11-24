@@ -200,9 +200,11 @@ plot.sample_size_data <- function(x,
   if (settings_panel) {
     items <- c("Stratum" = describe_data_stratum(attr(x, "data")),
                "Data" = describe_units(attr(x, "data")),
-               "Strata compared" = s$n_strata,
+               "Strata compared" = paste0(s$n_strata,
+                 if (isTRUE(attr(x, "n_strata_from_data"))) " (from data)"),
                "Alpha" = s$alpha,
                "Power" = s$power,
+               "Min n" = s$min_n,
                "Worst case" = if (is.na(worst)) "none" else
                  paste0(x$metric[worst], " (CV ", round(x$cv[worst], 1),
                         "%)\nHighest CV, outlined in orange"))

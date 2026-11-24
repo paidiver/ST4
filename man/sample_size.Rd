@@ -4,16 +4,19 @@
 \alias{sample_size}
 \title{Number of sample units required}
 \usage{
-sample_size(cv, delta, control = sample_size_control(), ...)
+sample_size(cv = 50, delta, control = sample_size_control(), ...)
 }
 \arguments{
-\item{cv}{Coefficient of variation of the metric, in \%.}
+\item{cv}{Coefficient of variation of the metric, in \%. At least 0.1.
+50 by default, for when there is no data yet.}
 
-\item{delta}{Smallest true difference to detect, in \% of the mean.}
+\item{delta}{Smallest true difference to detect, in \% of the mean. At
+least 0.1. It can be over 100, for differences larger than the mean.
+There is no default.}
 
 \item{control}{Settings from \code{\link[=sample_size_control]{sample_size_control()}}: the significance
 level \eqn{\alpha}, the power \eqn{P}, the number of strata \eqn{a} and
-the largest n to try. Can also be a list, such as \code{list(alpha = 0.1)}.
+the smallest and largest n. Can also be a list, such as \code{list(alpha = 0.1)}.
 Durden et al. (2016) use P for both power and significance in the text;
 here they are separate.}
 
@@ -43,10 +46,11 @@ n counts SUs of whichever kind the CV came from: single images, or
 composite SUs from \code{\link[=build_sample_units]{build_sample_units()}}. See \link{ST4-package} for the terms.
 
 n appears on both sides (through \eqn{v}), so it is found by stepping n up
-until the inequality holds. When the power is 0.5 or more, the search
-starts from the same formula with normal (z) values in place of t values.
-Those t values are always larger than the z values, so no smaller n can
-work and the result is the same as starting from n = 2, only faster.
+from \code{min_n} (3 by default) until the inequality holds. When the power is
+0.5 or more, the search starts from the same formula with normal (z)
+values in place of t values. Those t values are always larger than the z
+values, so no smaller n can work and the result is the same as starting
+from \code{min_n}, only faster.
 }
 \examples{
 # Detect a 40\% difference between 2 strata when the CV is 20\%

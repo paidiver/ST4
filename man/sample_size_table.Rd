@@ -19,7 +19,7 @@ become the table columns.}
 
 \item{control}{Settings from \code{\link[=sample_size_control]{sample_size_control()}}: the significance
 level \eqn{\alpha}, the power \eqn{P}, the number of strata \eqn{a} and
-the largest n to try. Can also be a list, such as \code{list(alpha = 0.1)}.
+the smallest and largest n. Can also be a list, such as \code{list(alpha = 0.1)}.
 Durden et al. (2016) use P for both power and significance in the text;
 here they are separate.}
 
@@ -35,12 +35,13 @@ kept in \code{attr(x, "settings")} as a \code{\link[=sample_size_control]{sample
 }
 \description{
 Runs \code{\link[=sample_size]{sample_size()}} for every combination of \code{cv} and \code{delta}. The
-defaults are the values used in Table 1 of Durden et al. (2016), so
-\code{sample_size_table()} with no arguments recreates that table.
+default \code{cv} and \code{delta} are the values used in Table 1 of Durden et al.
+(2016). That table used a power of 0.9 and allowed 2 sample units, so
+\code{sample_size_table(power = 0.9, min_n = 2)} recreates it.
 }
 \examples{
 # Recreate Durden et al. (2016) Table 1
-tab <- sample_size_table()
+tab <- sample_size_table(power = 0.9, min_n = 2)
 tab
 plot(tab, max_shown = 10)
 

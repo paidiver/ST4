@@ -12,7 +12,8 @@
 #' @param by Name of the metadata column that holds the strata.
 #'
 #' @return An `su_images` object holding only the images in `stratum`. The chosen
-#'   column and stratum are kept in `x$settings$by` and `x$settings$stratum`.
+#'   column and stratum are kept in `x$settings$by` and `x$settings$stratum`,
+#'   and the number of strata in that column in `x$settings$n_strata`.
 #'
 #' @examples
 #' counts <- data.frame(
@@ -55,5 +56,7 @@ select_stratum <- function(x, stratum, by = "Substratum") {
                      kind = class(x)[1])
   out$settings$by <- by
   out$settings$stratum <- stratum
+  # Number of strata in the data, for sample_size_data()
+  out$settings$n_strata <- length(unique(values[!is.na(values)]))
   out
 }

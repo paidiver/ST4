@@ -1,7 +1,8 @@
 # durden_table1, table1_cv and table1_delta are in helper-su-matrix.R
 
-test_that("the defaults recreate Durden et al. (2016) Table 1", {
-  tab <- sample_size_table()
+test_that("the default grid recreates Durden et al. (2016) Table 1", {
+  # Table 1 used power 0.9 and allowed 2 SUs
+  tab <- sample_size_table(power = 0.9, min_n = 2)
   m <- unclass(tab)
 
   expect_equal(rownames(m), as.character(table1_cv))
@@ -33,11 +34,12 @@ test_that("keeps the settings used", {
   expect_equal(unclass(attr(tab, "settings"))[c("n_strata", "alpha", "power",
                                                 "max_n")],
                list(n_strata = 3, alpha = 0.1, power = 0.8, max_n = 50))
+  expect_equal(attr(tab, "settings")$min_n, 3)
 })
 
 test_that("print shows the settings and marks cells over max_n", {
   tab <- sample_size_table(cv = c(5, 50), delta = c(10, 100), max_n = 20)
-  expect_output(print(tab), "2 strata compared, alpha 0.05, power 0.9")
+  expect_output(print(tab), "2 strata compared, alpha 0.05, power 0.95")
   expect_output(print(tab), "not from survey data")
   expect_output(print(tab), ">20")
 })
