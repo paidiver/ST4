@@ -69,6 +69,38 @@ test_that("SU counts are the sums of their images", {
   expect_setequal(y$members$FileName, rownames(x$comm))
 })
 
+test_that("SUs on real-sized data keep to the rules for any seed", {
+  # Sand images vary in area, so SUs overshoot the target by different amounts
+  x <- synthetic_sand()
+  target <- 50
+  for (seed in 1:5) {
+    y <- build_sample_units(x, type = "area", size = target, seed = seed)
+    area <- y$meta$Area_seabed_m2
+    image_area <- x$meta$Area_seabed_m2[match(y$members$FileName,
+                                              x$meta$FileName)]
+    # Members are listed in the order they were added, so the last one per
+    # SU is the image that took it past the target
+    last <- !duplicated(y$members$SU, fromLast = TRUE)
+    # Every SU reaches the target, and goes over by less than one image:
+    # without its last image it would be under the target
+    expect_true(all(area >= target))
+    expect_true(all(area - image_area[last] < target))
+    # Each image is used at most once
+    expect_false(anyDuplicated(y$members$FileName) > 0)
+    # Totals are kept: SUs plus dropped images give back the whole stratum
+    dropped <- setdiff(rownames(x$comm), y$members$FileName)
+    expect_equal(length(dropped), y$settings$n_dropped)
+    expect_equal(colSums(y$comm) + colSums(x$comm[dropped, , drop = FALSE]),
+                 colSums(x$comm))
+    expect_equal(sum(area) + sum(x$meta$Area_seabed_m2[
+      x$meta$FileName %in% dropped]), sum(x$meta$Area_seabed_m2))
+    # The dropped images together never reach the target, or they would
+    # have made another SU
+    expect_true(sum(x$meta$Area_seabed_m2[
+      x$meta$FileName %in% dropped]) < target)
+  }
+})
+
 test_that("the same seed gives the same SUs and leaves the session alone", {
   x <- units_data()
   set.seed(42)

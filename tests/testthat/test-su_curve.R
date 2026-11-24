@@ -90,6 +90,22 @@ test_that("without replacement every order ends with all the images", {
                "cannot go past the 6 images")
 })
 
+test_that("richness, area and individuals never drop along the curve", {
+  # Adding an image can only add taxa, area and individuals. Each random
+  # order rises, so the median and band across orders rise too.
+  x <- synthetic_sand()
+  for (replace in c(TRUE, FALSE)) {
+    out <- suppressWarnings(
+      su_curve(x, "richness", replace = replace, times = 50, seed = 1)
+    )
+    for (col in c("median", "lower", "upper", "area", "individuals")) {
+      expect_true(all(diff(out[[col]]) >= 0), info = paste(col, replace))
+    }
+    # Richness can never be more than the taxa in the data
+    expect_true(all(out$upper <= ncol(x$comm)))
+  }
+})
+
 test_that("records only the steps asked for", {
   out <- su_curve(curve_data(), "richness", steps = c(1, 5, 20), times = 20,
                   seed = 1)
