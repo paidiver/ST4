@@ -82,6 +82,10 @@ survey$comm[1:5, 1:6]
 one_stratum <- select_stratum(survey, stratum, by = stratum_by)
 one_stratum
 
+# A quick check of the data: empty images, individuals and area per image,
+# rare and common taxa
+summary(one_stratum)
+
 
 # ---- 3. Metrics for each image ------------------------------------------------
 
@@ -172,6 +176,9 @@ su_size <- 150
 sus <- build_sample_units(one_stratum, type = su_type, size = su_size,
                           seed = seed)
 sus
+
+# The same check for the SUs
+summary(sus)
 
 # The images in each SU
 head(sus$members)
