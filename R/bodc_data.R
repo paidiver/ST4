@@ -1,0 +1,66 @@
+#' BODC example data
+#'
+#' Real seabed image annotations from the abyssal Pacific, published by the
+#' British Oceanographic Data Centre (BODC) under a CC BY 4.0 licence. Used by
+#' the BODC demo script, `inst/scripts/demo_bodc.R`.
+#'
+#' Three CSV files:
+#' * `bodc_counts.csv`: one row per image and one column per label (taxon).
+#'   The first column holds the image ids.
+#' * `bodc_metadata.csv`: one row per image, with columns `FileName` (image
+#'   id), `Area_seabed_m2`, `Survey` and `Datetime` (when the image was
+#'   taken, UTC).
+#' * `bodc_labels.csv`: one row per label, with its lowest taxonomic name and
+#'   whether it is in the published label set.
+#'
+#' There are 67 images, 83 individuals and 144 labels. The images were taken
+#' on RV Kilo Moana cruise KM1808 in 2018, in Areas of Particular
+#' Environmental Interest 1, 4 and 7 in the western Clarion-Clipperton Zone.
+#' The wider study is documented at \doi{10.3389/fmars.2021.671062}.
+#'
+#' @section Source:
+#' Durden, J., Bingo, S. and Putts, M. (2026). Annotations in repeated seabed
+#' photograph sets with independent review to assess inter- and
+#' intraobserver variation in benthic biodiversity of metazoans (2018). NERC
+#' EDS British Oceanographic Data Centre NOC.
+#' \doi{10.5285/5f9b8ce1-0b4d-4061-e063-7086abc0b131}
+#'
+#' Durden, J., Bingo, S. and Putts, M. (2026). Labels used to assess benthic
+#' biodiversity of metazoan megafauna in the western Clarion-Clipperton Zone
+#' (CCZ). NERC EDS British Oceanographic Data Centre NOC.
+#' \doi{10.5285/5f9ba3ef-e59d-446d-e063-7086abc00439}
+#'
+#' Licence: CC BY 4.0, <https://creativecommons.org/licenses/by/4.0/>. The
+#' package code is under the Apache License 2.0.
+#'
+#' @section Changes made:
+#' The data was collected to compare observers, not to survey the seabed, and
+#' was changed as follows by `data-raw/bodc_data.R`:
+#' * Only Observer 1's finds in the interobserver comparison are kept, with
+#'   the labels given by the independent reviewer.
+#' * Each annotation is counted as one individual, and the annotations are
+#'   turned into counts per image and label.
+#' * Labels in the label set that were never used are kept as columns of 0.
+#'   Four labels used in the annotations are not in the published label set.
+#'   They are kept too, and marked in `bodc_labels.csv`.
+#' * Survey and date and time (from the image file name) are added to the
+#'   metadata.
+#'
+#' @section Limits:
+#' * No image areas are published, so each image is given an area of 1 m².
+#'   Density is individuals per image, and SUs are built by number of images.
+#' * Only images with at least one annotation are in the data, so there are
+#'   no empty images. Real surveys have many, so CVs here are lower and fewer
+#'   SUs are needed than in a real survey.
+#' * The data is used as one stratum.
+#'
+#' @examples
+#' counts_file <- system.file("extdata", "bodc_counts.csv", package = "ST4")
+#' metadata_file <- system.file("extdata", "bodc_metadata.csv", package = "ST4")
+#' x <- read_counts(counts_file, metadata_file)
+#' x
+#'
+#' labels <- read.csv(system.file("extdata", "bodc_labels.csv", package = "ST4"))
+#' head(labels)
+#' @name bodc_data
+NULL
