@@ -1,0 +1,32 @@
+The ST4 package code is under the Apache License 2.0 (see LICENSE.md).
+
+The following files are not package code and are under their own licences.
+
+inst/extdata/bodc_counts.csv
+inst/extdata/bodc_metadata.csv
+inst/extdata/bodc_labels.csv
+
+  Derived from:
+
+  Durden, J., Bingo, S. and Putts, M. (2026). Annotations in repeated seabed
+  photograph sets with independent review to assess inter- and
+  intraobserver variation in benthic biodiversity of metazoans (2018). NERC
+  EDS British Oceanographic Data Centre NOC.
+  doi:10.5285/5f9b8ce1-0b4d-4061-e063-7086abc0b131
+
+  Durden, J., Bingo, S. and Putts, M. (2026). Labels used to assess benthic
+  biodiversity of metazoan megafauna in the western Clarion-Clipperton Zone
+  (CCZ). NERC EDS British Oceanographic Data Centre NOC.
+  doi:10.5285/5f9ba3ef-e59d-446d-e063-7086abc00439
+
+  Licence: Creative Commons Attribution 4.0 International (CC BY 4.0),
+  https://creativecommons.org/licenses/by/4.0/
+
+  Changed: annotations converted to counts per image and label, a subset of
+  annotations kept, and metadata added. See ?bodc_data and
+  data-raw/bodc_data.R.
+
+inst/extdata/synthetic_counts.csv
+inst/extdata/synthetic_metadata.csv
+
+  Made-up values, part of the package (Apache License 2.0).
